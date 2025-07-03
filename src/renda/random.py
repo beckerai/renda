@@ -13,6 +13,7 @@
 # limitations under the License.
 from typing import Any
 
+
 MIN_SEED = 0
 MAX_SEED = 4294967295  # 2^32 - 1 (uint32)
 
