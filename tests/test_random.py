@@ -17,30 +17,21 @@ from renda.random import MAX_SEED, MIN_SEED, ensure_seed, is_seed
 
 
 @pytest.mark.parametrize(
-    "value",
+    ("value", "result"),
     (
-        pytest.param(42, id="int_42"),
-        pytest.param(MIN_SEED, id="MIN_SEED"),
-        pytest.param(MAX_SEED, id="MAX_SEED"),
+        pytest.param(42, True, id="42"),
+        pytest.param(MIN_SEED, True, id="MIN_SEED"),
+        pytest.param(MAX_SEED, True, id="MAX_SEED"),
+        pytest.param(4.2, False, id="4.2"),
+        pytest.param("forty-two", False, id="forty-two"),
+        pytest.param(True, False, id="True"),
+        pytest.param(MIN_SEED - 1, False, id="MIN_SEED_minus_1"),
+        pytest.param(MAX_SEED + 1, False, id="MAX_SEED_plus_1"),
+        pytest.param(None, False, id="None"),
     ),
 )
-def test_is_seed(value):
-    assert is_seed(value)
-
-
-@pytest.mark.parametrize(
-    "value",
-    (
-        pytest.param(4.2, id="float"),
-        pytest.param("forty-two", id="string"),
-        pytest.param(True, id="boolean"),
-        pytest.param(MIN_SEED - 1, id="int_lt_MIN_SEED"),
-        pytest.param(MAX_SEED + 1, id="int_gt_MAX_SEED"),
-        pytest.param(None, id="None"),
-    ),
-)
-def test_is_seed_invalid_value(value):
-    assert is_seed(value) is False
+def test_is_seed(value, result):
+    assert is_seed(value) is result
 
 
 @pytest.mark.parametrize(
