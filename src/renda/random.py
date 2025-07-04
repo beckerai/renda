@@ -24,3 +24,11 @@ def is_seed(value: Any) -> bool:
         and not isinstance(value, bool)
         and MIN_SEED <= value <= MAX_SEED
     )
+
+
+def ensure_seed(value: int) -> int:
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise TypeError("`value` must be of type `int`")
+    # This only works because MIN_SEED = 0 and MIN_SEED > 0
+    # A more general solutions would be nice
+    return value % (MAX_SEED + 1)
