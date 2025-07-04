@@ -43,7 +43,7 @@ class temp_seed:
         if not is_seed(seed) and seed is not None:
             raise ValueError(
                 f"`seed` must be an `int` between `MIN_SEED = {MIN_SEED}` and "
-                f"`MAX_SEED = {MAX_SEED}` or None."
+                f"`MAX_SEED = {MAX_SEED}` or None"
             )
 
         self._seed = seed

@@ -201,7 +201,7 @@ class TestTempSeed:
 def test_temp_seed_value_error(seed):
     error_message = (
         f"`seed` must be an `int` between `MIN_SEED = {MIN_SEED}` and "
-        f"`MAX_SEED = {MAX_SEED}` or None."
+        f"`MAX_SEED = {MAX_SEED}` or None"
     )
     with pytest.raises(ValueError, match=error_message):
         with temp_seed(seed):
