@@ -40,18 +40,25 @@ def ensure_seed(value: int) -> int:
 
 class temp_seed:
     def __init__(self, seed: Optional[int]) -> None:
-        if not is_seed(seed) and seed is not None:
-            raise ValueError(
-                f"`seed` must be an `int` between `MIN_SEED = {MIN_SEED}` and "
-                f"`MAX_SEED = {MAX_SEED}` or None"
-            )
-
         self._seed = seed
 
         self._random_state = None
         self._np_random_state = None
         self._torch_rng_state = None
         self._torch_cuda_rng_state_all = None
+
+    @property
+    def _seed(self) -> Optional[int]:
+        return self.__seed
+
+    @_seed.setter
+    def _seed(self, value: Optional[int]) -> None:
+        if not is_seed(value) and value is not None:
+            raise ValueError(
+                f"`seed` must be an `int` between `MIN_SEED = {MIN_SEED}` and "
+                f"`MAX_SEED = {MAX_SEED}` or None"
+            )
+        self.__seed = value
 
     def __enter__(self) -> None:  # pragma: no cover
         if self._seed is not None:
