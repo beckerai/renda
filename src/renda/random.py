@@ -23,19 +23,16 @@ MAX_SEED = 4294967295  # 2^32 - 1 (uint32)
 
 
 def is_seed(value: Any) -> bool:
-    return (
-        isinstance(value, int)
-        and not isinstance(value, bool)
-        and MIN_SEED <= value <= MAX_SEED
-    )
+    return isinstance(value, int) and MIN_SEED <= value <= MAX_SEED
 
 
 def ensure_seed(value: int) -> int:
-    if not isinstance(value, int) or isinstance(value, bool):
+    if isinstance(value, int):
+        # This only works because MIN_SEED = 0 and MIN_SEED > 0
+        # A more general solutions would be nice
+        return value % (MAX_SEED + 1)
+    else:
         raise TypeError("`value` must be of type `int`")
-    # This only works because MIN_SEED = 0 and MIN_SEED > 0
-    # A more general solutions would be nice
-    return value % (MAX_SEED + 1)
 
 
 class temp_seed:

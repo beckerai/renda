@@ -23,12 +23,15 @@ from renda.random import MAX_SEED, MIN_SEED, ensure_seed, is_seed, temp_seed
 @pytest.mark.parametrize(
     ("value", "result"),
     (
+        # Seeds
         pytest.param(42, True, id="42"),
         pytest.param(MIN_SEED, True, id="MIN_SEED"),
         pytest.param(MAX_SEED, True, id="MAX_SEED"),
+        pytest.param(False, True, id="False"),
+        pytest.param(True, True, id="True"),
+        # Non-seeds
         pytest.param(4.2, False, id="4.2"),
         pytest.param("forty-two", False, id="forty-two"),
-        pytest.param(True, False, id="True"),
         pytest.param(MIN_SEED - 1, False, id="MIN_SEED_minus_1"),
         pytest.param(MAX_SEED + 1, False, id="MAX_SEED_plus_1"),
         pytest.param(None, False, id="None"),
@@ -41,9 +44,14 @@ def test_is_seed(value, result):
 @pytest.mark.parametrize(
     ("value", "value_expected"),
     (
+        # Seeds
         pytest.param(42, 42, id="42"),
         pytest.param(MIN_SEED, MIN_SEED, id="MIN_SEED"),
         pytest.param(MAX_SEED, MAX_SEED, id="MAX_SEED"),
+        # Boolean seeds only change in type (bool -> int)
+        pytest.param(False, 0, id="False"),
+        pytest.param(True, 1, id="True"),
+        # Non-seeds of type int are mapped onto seeds
         pytest.param(MIN_SEED - 1, MAX_SEED, id="MIN_SEED_minus_1"),
         pytest.param(MAX_SEED + 1, MIN_SEED, id="MAX_SEED_plus_1"),
         pytest.param(MIN_SEED - 42, MAX_SEED - 41, id="MIN_SEED_minus_42"),
@@ -61,7 +69,6 @@ def test_ensure_seed(value, value_expected):
     (
         pytest.param(4.2, id="float"),
         pytest.param("forty-two", id="str"),
-        pytest.param(True, id="bool"),
         pytest.param(None, id="NoneType"),
         pytest.param(lambda: 0, id="function"),
     ),
@@ -193,7 +200,6 @@ class TestTempSeed:
     (
         pytest.param(4.2, id="4.2"),
         pytest.param("forty-two", id="forty-two"),
-        pytest.param(True, id="True"),
         pytest.param(MIN_SEED - 1, id="MIN_SEED_minus_1"),
         pytest.param(MAX_SEED + 1, id="MAX_SEED_plus_1"),
     ),
