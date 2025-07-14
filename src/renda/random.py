@@ -23,42 +23,39 @@ MAX_SEED = 4294967295  # 2^32 - 1 (uint32)
 
 
 def is_seed(value: Any) -> bool:
-    return (
-        isinstance(value, int)
-        and not isinstance(value, bool)
-        and MIN_SEED <= value <= MAX_SEED
-    )
+    return isinstance(value, int) and MIN_SEED <= value <= MAX_SEED
 
 
 def ensure_seed(value: int) -> int:
-    if not isinstance(value, int) or isinstance(value, bool):
+    if isinstance(value, int):
+        # This only works because MIN_SEED = 0 and MIN_SEED > 0
+        # A more general solutions would be nice
+        return value % (MAX_SEED + 1)
+    else:
         raise TypeError("`value` must be of type `int`")
-    # This only works because MIN_SEED = 0 and MIN_SEED > 0
-    # A more general solutions would be nice
-    return value % (MAX_SEED + 1)
+
+
+def check_seed(value: Any, allow_none: bool = False) -> Any:
+    if not isinstance(allow_none, bool):
+        raise TypeError("`allow_none` must be of type `bool`")
+
+    if is_seed(value) or (value is None and allow_none):
+        return value
+    else:
+        raise ValueError(
+            f"`seed` must be an `int` between `MIN_SEED = {MIN_SEED}` and "
+            f"`MAX_SEED = {MAX_SEED}`" + allow_none * " or None"
+        )
 
 
 class temp_seed:
     def __init__(self, seed: Optional[int]) -> None:
-        self._seed = seed
+        self._seed = check_seed(seed, allow_none=True)
 
         self._random_state = None
         self._np_random_state = None
         self._torch_rng_state = None
         self._torch_cuda_rng_state_all = None
-
-    @property
-    def _seed(self) -> Optional[int]:
-        return self.__seed
-
-    @_seed.setter
-    def _seed(self, value: Optional[int]) -> None:
-        if not is_seed(value) and value is not None:
-            raise ValueError(
-                f"`seed` must be an `int` between `MIN_SEED = {MIN_SEED}` and "
-                f"`MAX_SEED = {MAX_SEED}` or None"
-            )
-        self.__seed = value
 
     def __enter__(self) -> None:  # pragma: no cover
         if self._seed is not None:
