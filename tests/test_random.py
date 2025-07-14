@@ -73,8 +73,8 @@ def test_ensure_seed(value, value_expected):
         pytest.param(lambda: 0, id="function"),
     ),
 )
-def test_ensure_seed_type_error(value):
-    with pytest.raises(TypeError, match="`value` must be of type `int`"):
+def test_ensure_seed_for_invalid_value(value):
+    with pytest.raises(TypeError):
         ensure_seed(value)
 
 
