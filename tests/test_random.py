@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 import torch
 
-from renda.random import MAX_SEED, MIN_SEED, ensure_seed, is_seed, temp_seed
+from renda.random import MAX_SEED, MIN_SEED, check_seed, ensure_seed, is_seed, temp_seed
 
 
 @pytest.mark.parametrize(
@@ -76,6 +76,52 @@ def test_ensure_seed(value, value_expected):
 def test_ensure_seed_type_error(value):
     with pytest.raises(TypeError, match="`value` must be of type `int`"):
         ensure_seed(value)
+
+
+@pytest.mark.parametrize(
+    "value",
+    (
+        pytest.param(42, id="42"),
+        pytest.param(MIN_SEED, id="MIN_SEED"),
+        pytest.param(MAX_SEED, id="MAX_SEED"),
+        pytest.param(False, id="False"),
+        pytest.param(True, id="True"),
+        # This works for allow_none=True
+        pytest.param(None, id="None"),
+    ),
+)
+def test_check_seed(value):
+    assert check_seed(value, allow_none=True) == value
+
+
+@pytest.mark.parametrize(
+    "value",
+    (
+        pytest.param(4.2, id="4.2"),
+        pytest.param("forty-two", id="forty-two"),
+        pytest.param(MIN_SEED - 1, id="MIN_SEED_minus_1"),
+        pytest.param(MAX_SEED + 1, id="MAX_SEED_plus_1"),
+        # This DOES NOT work because allow_none=False by default
+        pytest.param(None, id="None"),
+    ),
+)
+def test_check_seed_for_invalid_value(value):
+    with pytest.raises(ValueError):
+        check_seed(value)
+
+
+@pytest.mark.parametrize(
+    "allow_none",
+    (
+        pytest.param(4.2, id="float"),
+        pytest.param("forty-two", id="str"),
+        pytest.param(None, id="NoneType"),
+        pytest.param(lambda: 0, id="function"),
+    ),
+)
+def test_check_seed_for_invalid_allow_none(allow_none):
+    with pytest.raises(TypeError):
+        check_seed(42, allow_none=allow_none)
 
 
 @pytest.mark.parametrize(
@@ -193,22 +239,3 @@ class TestTempSeed:
         b = get_10_random_numbers()
 
         assert all_equal(a, b)
-
-
-@pytest.mark.parametrize(
-    "seed",
-    (
-        pytest.param(4.2, id="4.2"),
-        pytest.param("forty-two", id="forty-two"),
-        pytest.param(MIN_SEED - 1, id="MIN_SEED_minus_1"),
-        pytest.param(MAX_SEED + 1, id="MAX_SEED_plus_1"),
-    ),
-)
-def test_temp_seed_value_error(seed):
-    error_message = (
-        f"`seed` must be an `int` between `MIN_SEED = {MIN_SEED}` and "
-        f"`MAX_SEED = {MAX_SEED}` or None"
-    )
-    with pytest.raises(ValueError, match=error_message):
-        with temp_seed(seed):
-            pass
