@@ -28,13 +28,16 @@ def check_scalar(
         value_is_invalid = not isinstance(value, type_)
     except TypeError:
         raise TypeError(
-            f"`type_` must be a `type` or a `tuple` of types, checking if "
-            f"`value={value}` is an instance of `type_={type_}` failed"
+            f"`type_` must be a `type` or a `tuple` of types, unable to check "
+            f"if `value={value}` is an instance of `type_={type_}`"
         )
 
     name = kwargs.pop("name", "value")
     if not isinstance(name, str):
-        raise TypeError(f"`name` must be of type `str`, got `{name}`")
+        raise TypeError(
+            f"`name` must be of type `str`, got `name={name}` of type "
+            f"`{type(name).__qualname__}`"
+        )
 
     if value_is_invalid:
         if isinstance(type_, tuple):
@@ -61,11 +64,18 @@ def check_scalar(
         "in_": "in",
         "not_in": "not in",
     }
-    if not kwargs.keys() <= supported_operators.keys():
+
+    unsupported_operators = []
+    for k in kwargs.keys():
+        if k not in supported_operators:
+            unsupported_operators.append(k)
+
+    if len(unsupported_operators) > 0:
         raise TypeError(
-            f"unknown operator keyword(s) `{', `'.join(kwargs.keys())}`, "
+            f"unsupported operator keyword(s) "
+            f"`{'`, `'.join(unsupported_operators)}`, "
             f"supported operator keywords are "
-            f"`{', `'.join(supported_operators.keys())}`"
+            f"`{'`, `'.join(supported_operators.keys())}`"
         )
 
     for k, v in kwargs.items():
@@ -79,7 +89,7 @@ def check_scalar(
 
         try:
             value_is_invalid = not operator_(value, v)
-        except TypeError as original_type_error:
+        except TypeError as e:
             if k in ("in_", "not_in"):
                 raise TypeError(f"`{k}` must be iterable, got `{v}`")
             elif k in ("ge", "gt", "le", "lt"):
@@ -89,7 +99,7 @@ def check_scalar(
                     f"`{type(v).__qualname__}`"
                 )
             else:
-                raise original_type_error
+                raise e  # pragma: no cover
 
         if value_is_invalid:
             raise ValueError(
