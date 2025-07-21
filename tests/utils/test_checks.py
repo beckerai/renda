@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from collections import OrderedDict
+from types import NoneType
 
 import pytest
 
-from renda.utils.checks import CheckError, check_scalar
+from renda.utils.checks import CheckError, check_scalar, check_sequence
 
 
 @pytest.mark.parametrize(
@@ -331,3 +332,37 @@ def test_check_scalar_in_not_in_invalid(operator):
     operators = {operator: 0}
     with pytest.raises(TypeError, match=match):
         check_scalar(0, int, **operators)
+
+
+@pytest.mark.parametrize(
+    ("sequence", "type_"),
+    (pytest.param((False, True), bool, id="bool"),),
+)
+def test_check_sequence(sequence, type_):
+    assert check_sequence(sequence, type_) == sequence
+
+
+def test_check_sequence_fails():
+    match = (
+        "\n"
+        "  - `s\\[1\\]` must be of type `float`, got `True` of type `bool`\n"
+        "  - `s\\[3\\] < 3.0` not satisfied, got `3.0`"
+    )
+    with pytest.raises(CheckError, match=match):
+        check_sequence((0.0, True, 2.0, 3.0), float, name="s", lt=3.0)
+
+
+@pytest.mark.parametrize(
+    ("sequence", "type_"),
+    (
+        pytest.param(False, bool, id="bool"),
+        pytest.param(0, int, id="int"),
+        pytest.param(0.0, float, id="float"),
+        pytest.param(None, NoneType, id="NoneType"),
+        pytest.param(lambda: 0, callable, id="callable"),
+    ),
+)
+def test_check_sequence_invalid(sequence, type_):
+    match = f"`sequence` must be a sequence, got `{sequence}`"
+    with pytest.raises(CheckError, match=match):
+        check_sequence(sequence, type_)

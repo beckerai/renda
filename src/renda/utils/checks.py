@@ -13,7 +13,56 @@
 # limitations under the License.
 import operator
 from types import UnionType
-from typing import Any
+from typing import Any, Sequence
+
+
+def _check_type(
+    type_: type | UnionType | tuple[Any, ...],
+) -> type | UnionType | tuple[Any, ...]:
+    try:
+        isinstance(object(), type_)
+    except TypeError:
+        raise TypeError(
+            f"`type_` must be a type, a tuple of types, or a union, got `{type_}`"
+        )
+
+    return type_
+
+
+def _check_name(name: str) -> str:
+    if not isinstance(name, str):
+        raise TypeError(f"`name` must be a `str`, got `{name}`")
+
+    return name
+
+
+_SUPPORTED_OPERATORS = {
+    "ge": ">=",
+    "gt": ">",
+    "le": "<=",
+    "lt": "<",
+    "eq": "==",
+    "ne": "!=",
+    "in_": "in",
+    "not_in": "not in",
+}
+
+
+def _check_operators(operators: Any) -> dict[str:Any]:
+    unsupported_operators = []
+    for op_key in operators.keys():
+        if op_key not in _SUPPORTED_OPERATORS:
+            unsupported_operators.append(op_key)
+
+    if len(unsupported_operators) > 0:
+        raise TypeError(
+            f"unsupported operator keyword(s) "
+            f"`{'`, `'.join(unsupported_operators)}`, "
+            f"supported operator keywords are "
+            f"`{'`, `'.join(_SUPPORTED_OPERATORS.keys())}`"
+        )
+
+    return operators
 
 
 class CheckError(Exception):
@@ -26,25 +75,19 @@ def check_scalar(
     name: str = "value",
     **operators: Any,
 ) -> Any:
+    type_ = _check_type(type_)
+    name = _check_name(name)
+    operators = _check_operators(operators)
+
     # -----------
     # Type check
     # -----------
-    try:
-        check_failed = not isinstance(value, type_)
-    except TypeError:
-        raise TypeError(
-            f"`type_` must be a type, a tuple of types, or a union, got `{type_}`"
-        )
-
-    if not isinstance(name, str):
-        raise TypeError(f"`name` must be a `str`, got `{name}`")
-
-    if check_failed:
+    if not isinstance(value, type_):
         if isinstance(type_, tuple):
-            type_str = "`, `".join(t.__qualname__ for t in type_[:-1])
-            type_str = "`" + type_str + "` or `" + type_[-1].__qualname__ + "`"
+            type_str = ", ".join(f"`{t.__qualname__}`" for t in type_[:-1])
+            type_str = f"{type_str} or `{type_[-1].__qualname__}`"
         else:
-            type_str = "`" + type_.__qualname__ + "`"
+            type_str = f"`{type_.__qualname__}`"
 
         raise CheckError(
             f"`{name}` must be of type {type_str}, got "
@@ -54,32 +97,8 @@ def check_scalar(
     # ----------------
     # Operator checks
     # ----------------
-    supported_operators = {
-        "ge": ">=",
-        "gt": ">",
-        "le": "<=",
-        "lt": "<",
-        "eq": "==",
-        "ne": "!=",
-        "in_": "in",
-        "not_in": "not in",
-    }
-
-    unsupported_operators = []
-    for op_key in operators.keys():
-        if op_key not in supported_operators:
-            unsupported_operators.append(op_key)
-
-    if len(unsupported_operators) > 0:
-        raise TypeError(
-            f"unsupported operator keyword(s) "
-            f"`{'`, `'.join(unsupported_operators)}`, "
-            f"supported operator keywords are "
-            f"`{'`, `'.join(supported_operators.keys())}`"
-        )
-
     for op_key, op_arg in operators.items():
-        op_symbol = supported_operators[op_key]
+        op_symbol = _SUPPORTED_OPERATORS[op_key]
         if op_key == "in_":
             op = lambda a, b: operator.contains(b, a)  # noqa: E731
         elif op_key == "not_in":
@@ -107,3 +126,29 @@ def check_scalar(
             )
 
     return value
+
+
+def check_sequence(
+    sequence: Sequence[Any],
+    type_: type | UnionType | tuple[Any, ...],
+    name: str = "sequence",
+    **operators: Any,
+):
+    if not isinstance(sequence, Sequence):
+        raise CheckError(f"`{name}` must be a sequence, got `{sequence}`")
+
+    type_ = _check_type(type_)
+    name = _check_name(name)
+    operators = _check_operators(operators)
+
+    error_message = ""
+    for index, value in enumerate(sequence):
+        try:
+            check_scalar(value, type_, f"{name}[{index}]", **operators)
+        except CheckError as e:
+            error_message = f"{error_message}\n  - {e}"
+
+    if len(error_message) > 0:
+        raise CheckError(error_message)
+
+    return sequence
