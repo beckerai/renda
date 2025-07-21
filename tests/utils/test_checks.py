@@ -39,7 +39,8 @@ def test_check_scalar_type(value, type_):
     ),
 )
 def test_check_scalar_type_fails(value, type_):
-    with pytest.raises(CheckError):
+    match = "`value` must be of type .*"
+    with pytest.raises(CheckError, match=match):
         check_scalar(value, type_)
 
 
@@ -53,10 +54,7 @@ def test_check_scalar_type_fails(value, type_):
     ),
 )
 def test_check_scalar_type_invalid(type_):
-    match = (
-        f"`type_` must be a `type` or a `tuple` of types, unable to check if "
-        f"`value=0` is an instance of `type_={type_}`"
-    )
+    match = f"`type_` must be a type, a tuple of types, or a union, got `{type_}`"
     with pytest.raises(TypeError, match=match):
         check_scalar(0, type_)
 
@@ -65,7 +63,7 @@ def test_check_scalar_name():
     try:
         check_scalar(0, int, ge=1, name="a_string")
     except CheckError as e:
-        assert str(e) == "`a_string=0` does not satisfy `>= 1`"
+        assert str(e) == "`a_string >= 1` not satisfied, got `0`"
 
 
 @pytest.mark.parametrize(
@@ -78,10 +76,7 @@ def test_check_scalar_name():
     ),
 )
 def test_check_scalar_name_invalid(name):
-    match = (
-        f"`name` must be of type `str`, got `name={name}` of type "
-        f"`{type(name).__qualname__}`"
-    )
+    match = f"`name` must be a `str`, got `{name}`"
     with pytest.raises(TypeError, match=match):
         check_scalar(0, int, name=name)
 
@@ -114,7 +109,7 @@ def test_check_scalar_ge(value, type_, ge):
     ),
 )
 def test_check_scalar_ge_fails(value, type_, ge):
-    match = f"`value={value}` does not satisfy `>= {ge}`"
+    match = f"`value >= {ge}` not satisfied, got `{value}`"
     with pytest.raises(CheckError, match=match):
         check_scalar(value, type_, ge=ge)
 
@@ -140,7 +135,7 @@ def test_check_scalar_gt(value, type_, gt):
     ),
 )
 def test_check_scalar_gt_fails(value, type_, gt):
-    match = f"`value={value}` does not satisfy `> {gt}`"
+    match = f"`value > {gt}` not satisfied, got `{value}`"
     with pytest.raises(CheckError, match=match):
         check_scalar(value, type_, gt=gt)
 
@@ -166,7 +161,7 @@ def test_check_scaler_le(value, type_, le):
     ),
 )
 def test_check_scalar_le_fails(value, type_, le):
-    match = f"`value={value}` does not satisfy `<= {le}`"
+    match = f"`value <= {le}` not satisfied, got `{value}`"
     with pytest.raises(CheckError, match=match):
         check_scalar(value, type_, le=le)
 
@@ -192,7 +187,7 @@ def test_check_scaler_lt(value, type_, lt):
     ),
 )
 def test_check_scalar_lt_fails(value, type_, lt):
-    match = f"`value={value}` does not satisfy `< {lt}`"
+    match = f"`value < {lt}` not satisfied, got `{value}`"
     with pytest.raises(CheckError, match=match):
         check_scalar(value, type_, lt=lt)
 
@@ -208,7 +203,7 @@ def test_check_scalar_lt_fails(value, type_, lt):
 )
 def test_check_scalar_ge_gt_le_lt_invalid(operator, operator_symbol):
     match = (
-        f"`{operator}` \\(`{operator_symbol}`\\) not supported between "
+        f"`{operator_symbol}` \\(`{operator}`\\) not supported between "
         f"instances of `int` and `str`"
     )
     operators = {operator: "a_string"}
@@ -237,7 +232,7 @@ def test_check_scalar_eq(value, type_, eq):
     ),
 )
 def test_check_scalar_eq_fails(value, type_, eq):
-    match = f"`value={value}` does not satisfy `== {eq}`"
+    match = f"`value == {eq}` not satisfied, got `{value}`"
     with pytest.raises(CheckError, match=match):
         check_scalar(value, type_, eq=eq)
 
@@ -263,7 +258,7 @@ def test_check_scalar_ne(value, type_, ne):
     ),
 )
 def test_check_scalar_ne_fails(value, type_, ne):
-    match = f"`value={value}` does not satisfy `!= {ne}`"
+    match = f"`value != {ne}` not satisfied, got `{value}`"
     with pytest.raises(CheckError, match=match):
         check_scalar(value, type_, ne=ne)
 
@@ -289,7 +284,7 @@ def test_check_scalar_in(value, type_, in_):
     ),
 )
 def test_check_scalar_in_fails(value, type_, in_):
-    match = f"`value={value}` does not satisfy `in {in_}`"
+    match = f"`value in {in_}` not satisfied, got `{value}`"
     match = match.replace("(", "\\(")
     match = match.replace(")", "\\)")
     with pytest.raises(CheckError, match=match):
@@ -317,7 +312,7 @@ def test_check_scalar_not_in(value, type_, not_in):
     ),
 )
 def test_check_scalar_not_in_fails(value, type_, not_in):
-    match = f"`value={value}` does not satisfy `not in {not_in}`"
+    match = f"`value not in {not_in}` not satisfied, got `{value}`"
     match = match.replace("(", "\\(")
     match = match.replace(")", "\\)")
     with pytest.raises(CheckError, match=match):

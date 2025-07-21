@@ -33,26 +33,22 @@ def check_scalar(
         check_failed = not isinstance(value, type_)
     except TypeError:
         raise TypeError(
-            f"`type_` must be a `type` or a `tuple` of types, unable to check "
-            f"if `value={value}` is an instance of `type_={type_}`"
+            f"`type_` must be a type, a tuple of types, or a union, got `{type_}`"
         )
 
     if not isinstance(name, str):
-        raise TypeError(
-            f"`name` must be of type `str`, got `name={name}` of type "
-            f"`{type(name).__qualname__}`"
-        )
+        raise TypeError(f"`name` must be a `str`, got `{name}`")
 
     if check_failed:
         if isinstance(type_, tuple):
-            type_str = ", ".join(t.__qualname__ for t in type_)
-            type_str = f"({type_str})"
+            type_str = "`, `".join(t.__qualname__ for t in type_[:-1])
+            type_str = "`" + type_str + "` or `" + type_[-1].__qualname__ + "`"
         else:
-            type_str = type_.__qualname__
+            type_str = "`" + type_.__qualname__ + "`"
 
         raise CheckError(
-            f"`{name}` must be of `type_={type_str}`, got "
-            f"`{name}={value}` of type `{type(value).__qualname__}`"
+            f"`{name}` must be of type {type_str}, got "
+            f"`{value}` of type `{type(value).__qualname__}`"
         )
 
     # ----------------
@@ -70,9 +66,9 @@ def check_scalar(
     }
 
     unsupported_operators = []
-    for k in operators.keys():
-        if k not in supported_operators:
-            unsupported_operators.append(k)
+    for op_key in operators.keys():
+        if op_key not in supported_operators:
+            unsupported_operators.append(op_key)
 
     if len(unsupported_operators) > 0:
         raise TypeError(
@@ -82,32 +78,32 @@ def check_scalar(
             f"`{'`, `'.join(supported_operators.keys())}`"
         )
 
-    for k, v in operators.items():
-        operator_symbol = supported_operators[k]
-        if k == "in_":
-            operator_ = lambda a, b: operator.contains(b, a)  # noqa: E731
-        elif k == "not_in":
-            operator_ = lambda a, b: not operator.contains(b, a)  # noqa: E731
+    for op_key, op_arg in operators.items():
+        op_symbol = supported_operators[op_key]
+        if op_key == "in_":
+            op = lambda a, b: operator.contains(b, a)  # noqa: E731
+        elif op_key == "not_in":
+            op = lambda a, b: not operator.contains(b, a)  # noqa: E731
         else:
-            operator_ = getattr(operator, k)
+            op = getattr(operator, op_key)
 
         try:
-            check_failed = not operator_(value, v)
+            check_failed = not op(value, op_arg)
         except TypeError as e:
-            if k in ("in_", "not_in"):
-                raise TypeError(f"`{k}` must be iterable, got `{v}`")
-            elif k in ("ge", "gt", "le", "lt"):
+            if op_key in ("in_", "not_in"):
+                raise TypeError(f"`{op_key}` must be iterable, got `{op_arg}`")
+            elif op_key in ("ge", "gt", "le", "lt"):
                 raise TypeError(
-                    f"`{k}` (`{operator_symbol}`) not supported between "
+                    f"`{op_symbol}` (`{op_key}`) not supported between "
                     f"instances of `{type(value).__qualname__}` and "
-                    f"`{type(v).__qualname__}`"
+                    f"`{type(op_arg).__qualname__}`"
                 )
             else:
                 raise e  # pragma: no cover
 
         if check_failed:
             raise CheckError(
-                f"`{name}={value}` does not satisfy `{operator_symbol} {v}`"
+                f"`{name} {op_symbol} {op_arg}` not satisfied, got `{value}`"
             )
 
     return value
