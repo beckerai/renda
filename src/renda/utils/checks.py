@@ -23,7 +23,8 @@ class CheckError(Exception):
 def check_scalar(
     value: Any,
     type_: type | UnionType | tuple[Any, ...],
-    **kwargs: Any,
+    name: str = "value",
+    **operators: Any,
 ) -> Any:
     # -----------
     # Type check
@@ -36,7 +37,6 @@ def check_scalar(
             f"if `value={value}` is an instance of `type_={type_}`"
         )
 
-    name = kwargs.pop("name", "value")
     if not isinstance(name, str):
         raise TypeError(
             f"`name` must be of type `str`, got `name={name}` of type "
@@ -70,7 +70,7 @@ def check_scalar(
     }
 
     unsupported_operators = []
-    for k in kwargs.keys():
+    for k in operators.keys():
         if k not in supported_operators:
             unsupported_operators.append(k)
 
@@ -82,7 +82,7 @@ def check_scalar(
             f"`{'`, `'.join(supported_operators.keys())}`"
         )
 
-    for k, v in kwargs.items():
+    for k, v in operators.items():
         operator_symbol = supported_operators[k]
         if k == "in_":
             operator_ = lambda a, b: operator.contains(b, a)  # noqa: E731

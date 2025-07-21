@@ -88,9 +88,9 @@ def test_check_scalar_name_invalid(name):
 
 def test_check_scalar_operator_invalid():
     match = "unsupported operator keyword\\(s\\) `foo`, `bar`, .*"
-    kwargs = OrderedDict([("foo", 0), ("ge", 1), ("bar", 2)])
+    operators = OrderedDict([("foo", 0), ("ge", 1), ("bar", 2)])
     with pytest.raises(TypeError, match=match):
-        check_scalar(0, int, **kwargs)
+        check_scalar(0, int, **operators)
 
 
 @pytest.mark.parametrize(
@@ -211,9 +211,9 @@ def test_check_scalar_ge_gt_le_lt_invalid(operator, operator_symbol):
         f"`{operator}` \\(`{operator_symbol}`\\) not supported between "
         f"instances of `int` and `str`"
     )
-    kwargs = {operator: "a_string"}
+    operators = {operator: "a_string"}
     with pytest.raises(TypeError, match=match):
-        check_scalar(0, int, **kwargs)
+        check_scalar(0, int, **operators)
 
 
 @pytest.mark.parametrize(
@@ -333,6 +333,6 @@ def test_check_scalar_not_in_fails(value, type_, not_in):
 )
 def test_check_scalar_in_not_in_invalid(operator):
     match = f"`{operator}` must be iterable, got `0`"
-    kwargs = {operator: 0}
+    operators = {operator: 0}
     with pytest.raises(TypeError, match=match):
-        check_scalar(0, int, **kwargs)
+        check_scalar(0, int, **operators)
