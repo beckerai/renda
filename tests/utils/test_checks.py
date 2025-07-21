@@ -15,7 +15,7 @@ from collections import OrderedDict
 
 import pytest
 
-from renda.utils.checks import check_scalar
+from renda.utils.checks import CheckError, check_scalar
 
 
 @pytest.mark.parametrize(
@@ -39,7 +39,7 @@ def test_check_scalar_type(value, type_):
     ),
 )
 def test_check_scalar_type_fails(value, type_):
-    with pytest.raises(TypeError):
+    with pytest.raises(CheckError):
         check_scalar(value, type_)
 
 
@@ -64,7 +64,7 @@ def test_check_scalar_type_invalid(type_):
 def test_check_scalar_name():
     try:
         check_scalar(0, int, ge=1, name="a_string")
-    except ValueError as e:
+    except CheckError as e:
         assert str(e) == "`a_string=0` does not satisfy `>= 1`"
 
 
@@ -115,7 +115,7 @@ def test_check_scalar_ge(value, type_, ge):
 )
 def test_check_scalar_ge_fails(value, type_, ge):
     match = f"`value={value}` does not satisfy `>= {ge}`"
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(CheckError, match=match):
         check_scalar(value, type_, ge=ge)
 
 
@@ -141,7 +141,7 @@ def test_check_scalar_gt(value, type_, gt):
 )
 def test_check_scalar_gt_fails(value, type_, gt):
     match = f"`value={value}` does not satisfy `> {gt}`"
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(CheckError, match=match):
         check_scalar(value, type_, gt=gt)
 
 
@@ -167,7 +167,7 @@ def test_check_scaler_le(value, type_, le):
 )
 def test_check_scalar_le_fails(value, type_, le):
     match = f"`value={value}` does not satisfy `<= {le}`"
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(CheckError, match=match):
         check_scalar(value, type_, le=le)
 
 
@@ -193,7 +193,7 @@ def test_check_scaler_lt(value, type_, lt):
 )
 def test_check_scalar_lt_fails(value, type_, lt):
     match = f"`value={value}` does not satisfy `< {lt}`"
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(CheckError, match=match):
         check_scalar(value, type_, lt=lt)
 
 
@@ -238,7 +238,7 @@ def test_check_scalar_eq(value, type_, eq):
 )
 def test_check_scalar_eq_fails(value, type_, eq):
     match = f"`value={value}` does not satisfy `== {eq}`"
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(CheckError, match=match):
         check_scalar(value, type_, eq=eq)
 
 
@@ -264,7 +264,7 @@ def test_check_scalar_ne(value, type_, ne):
 )
 def test_check_scalar_ne_fails(value, type_, ne):
     match = f"`value={value}` does not satisfy `!= {ne}`"
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(CheckError, match=match):
         check_scalar(value, type_, ne=ne)
 
 
@@ -292,7 +292,7 @@ def test_check_scalar_in_fails(value, type_, in_):
     match = f"`value={value}` does not satisfy `in {in_}`"
     match = match.replace("(", "\\(")
     match = match.replace(")", "\\)")
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(CheckError, match=match):
         check_scalar(value, type_, in_=in_)
 
 
@@ -320,7 +320,7 @@ def test_check_scalar_not_in_fails(value, type_, not_in):
     match = f"`value={value}` does not satisfy `not in {not_in}`"
     match = match.replace("(", "\\(")
     match = match.replace(")", "\\)")
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(CheckError, match=match):
         check_scalar(value, type_, not_in=not_in)
 
 

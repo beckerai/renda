@@ -16,6 +16,10 @@ from types import UnionType
 from typing import Any
 
 
+class CheckError(Exception):
+    pass
+
+
 def check_scalar(
     value: Any,
     type_: type | UnionType | tuple[Any, ...],
@@ -25,7 +29,7 @@ def check_scalar(
     # Type check
     # -----------
     try:
-        value_is_invalid = not isinstance(value, type_)
+        check_failed = not isinstance(value, type_)
     except TypeError:
         raise TypeError(
             f"`type_` must be a `type` or a `tuple` of types, unable to check "
@@ -39,21 +43,21 @@ def check_scalar(
             f"`{type(name).__qualname__}`"
         )
 
-    if value_is_invalid:
+    if check_failed:
         if isinstance(type_, tuple):
             type_str = ", ".join(t.__qualname__ for t in type_)
             type_str = f"({type_str})"
         else:
             type_str = type_.__qualname__
 
-        raise TypeError(
+        raise CheckError(
             f"`{name}` must be of `type_={type_str}`, got "
             f"`{name}={value}` of type `{type(value).__qualname__}`"
         )
 
-    # -----------------
-    # Operators checks
-    # -----------------
+    # ----------------
+    # Operator checks
+    # ----------------
     supported_operators = {
         "ge": ">=",
         "gt": ">",
@@ -88,7 +92,7 @@ def check_scalar(
             operator_ = getattr(operator, k)
 
         try:
-            value_is_invalid = not operator_(value, v)
+            check_failed = not operator_(value, v)
         except TypeError as e:
             if k in ("in_", "not_in"):
                 raise TypeError(f"`{k}` must be iterable, got `{v}`")
@@ -101,8 +105,8 @@ def check_scalar(
             else:
                 raise e  # pragma: no cover
 
-        if value_is_invalid:
-            raise ValueError(
+        if check_failed:
+            raise CheckError(
                 f"`{name}={value}` does not satisfy `{operator_symbol} {v}`"
             )
 
