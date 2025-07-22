@@ -25,29 +25,29 @@ from renda.utils.checks import (
 
 
 @pytest.mark.parametrize(
-    ("value", "type_"),
+    ("scalar", "type_"),
     (
         pytest.param(True, bool, id="bool"),
         pytest.param(1, int, id="int"),
         pytest.param(1.0, float, id="float"),
     ),
 )
-def test_check_scalar_type(value, type_):
-    assert check_scalar(value, type_) == value
+def test_check_scalar_type(scalar, type_):
+    assert check_scalar(scalar, type_) == scalar
 
 
 @pytest.mark.parametrize(
-    ("value", "type_"),
+    ("scalar", "type_"),
     (
         pytest.param(True, float, id="bool vs. float"),
         pytest.param(1, (bool, float), id="int vs. (bool, float)"),
         pytest.param(1.0, (bool, int), id="float vs. (bool, int)"),
     ),
 )
-def test_check_scalar_type_fails(value, type_):
-    match = "`value` must be of type .*"
+def test_check_scalar_type_fails(scalar, type_):
+    match = "`scalar` must be of type .*"
     with pytest.raises(CheckError, match=match):
-        check_scalar(value, type_)
+        check_scalar(scalar, type_)
 
 
 @pytest.mark.parametrize(
@@ -67,7 +67,7 @@ def test_check_scalar_type_invalid(type_):
 
 def test_check_scalar_name():
     try:
-        check_scalar(0, int, ge=1, name="a_string")
+        check_scalar(0, int, name="a_string", ge=1)
     except CheckError as e:
         assert str(e) == "`a_string >= 1` not satisfied, got `0`"
 
@@ -95,107 +95,107 @@ def test_check_scalar_operator_invalid():
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "ge"),
+    ("scalar", "type_", "ge"),
     (
         pytest.param(False, bool, False, id="False >= False"),
         pytest.param(0, int, 0, id="0 >= 0"),
         pytest.param(0.0, float, 0.0, id="0.0 >= 0.0"),
     ),
 )
-def test_check_scalar_ge(value, type_, ge):
-    assert check_scalar(value, type_, ge=ge) == value
+def test_check_scalar_ge(scalar, type_, ge):
+    assert check_scalar(scalar, type_, ge=ge) == scalar
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "ge"),
+    ("scalar", "type_", "ge"),
     (
         pytest.param(False, bool, True, id="False >= True"),
         pytest.param(0, int, 1, id="0 >= 1"),
         pytest.param(0.0, float, 1.0, id="0.0 >= 1.0"),
     ),
 )
-def test_check_scalar_ge_fails(value, type_, ge):
-    match = f"`value >= {ge}` not satisfied, got `{value}`"
+def test_check_scalar_ge_fails(scalar, type_, ge):
+    match = f"`scalar >= {ge}` not satisfied, got `{scalar}`"
     with pytest.raises(CheckError, match=match):
-        check_scalar(value, type_, ge=ge)
+        check_scalar(scalar, type_, ge=ge)
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "gt"),
+    ("scalar", "type_", "gt"),
     (
         pytest.param(True, bool, False, id="True > False"),
         pytest.param(1, int, 0, id="1 > 0"),
         pytest.param(1.0, float, 0.0, id="1.0 > 0.0"),
     ),
 )
-def test_check_scalar_gt(value, type_, gt):
-    assert check_scalar(value, type_, gt=gt) == value
+def test_check_scalar_gt(scalar, type_, gt):
+    assert check_scalar(scalar, type_, gt=gt) == scalar
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "gt"),
+    ("scalar", "type_", "gt"),
     (
         pytest.param(False, bool, False, id="False > False"),
         pytest.param(0, int, 0, id="0 > 0"),
         pytest.param(0.0, float, 0.0, id="0.0 > 0.0"),
     ),
 )
-def test_check_scalar_gt_fails(value, type_, gt):
-    match = f"`value > {gt}` not satisfied, got `{value}`"
+def test_check_scalar_gt_fails(scalar, type_, gt):
+    match = f"`scalar > {gt}` not satisfied, got `{scalar}`"
     with pytest.raises(CheckError, match=match):
-        check_scalar(value, type_, gt=gt)
+        check_scalar(scalar, type_, gt=gt)
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "le"),
+    ("scalar", "type_", "le"),
     (
         pytest.param(True, bool, True, id="True <= True"),
         pytest.param(1, int, 1, id="1 <= 1"),
         pytest.param(1.0, float, 1.0, id="1.0 <= 1.0"),
     ),
 )
-def test_check_scaler_le(value, type_, le):
-    assert check_scalar(value, type_, le=le) == value
+def test_check_scaler_le(scalar, type_, le):
+    assert check_scalar(scalar, type_, le=le) == scalar
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "le"),
+    ("scalar", "type_", "le"),
     (
         pytest.param(True, bool, False, id="True <= False"),
         pytest.param(1, int, 0, id="1 <= 0"),
         pytest.param(1.0, float, 0.0, id="1.0 <= 0.0"),
     ),
 )
-def test_check_scalar_le_fails(value, type_, le):
-    match = f"`value <= {le}` not satisfied, got `{value}`"
+def test_check_scalar_le_fails(scalar, type_, le):
+    match = f"`scalar <= {le}` not satisfied, got `{scalar}`"
     with pytest.raises(CheckError, match=match):
-        check_scalar(value, type_, le=le)
+        check_scalar(scalar, type_, le=le)
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "lt"),
+    ("scalar", "type_", "lt"),
     (
         pytest.param(False, bool, True, id="False < True"),
         pytest.param(0, int, 1, id="0 < 1"),
         pytest.param(0.0, float, 1.0, id="0.0 < 1.0"),
     ),
 )
-def test_check_scaler_lt(value, type_, lt):
-    assert check_scalar(value, type_, lt=lt) == value
+def test_check_scaler_lt(scalar, type_, lt):
+    assert check_scalar(scalar, type_, lt=lt) == scalar
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "lt"),
+    ("scalar", "type_", "lt"),
     (
         pytest.param(True, bool, True, id="True < True"),
         pytest.param(1, int, 1, id="1 < 1"),
         pytest.param(1.0, float, 1.0, id="1.0 < 1.0"),
     ),
 )
-def test_check_scalar_lt_fails(value, type_, lt):
-    match = f"`value < {lt}` not satisfied, got `{value}`"
+def test_check_scalar_lt_fails(scalar, type_, lt):
+    match = f"`scalar < {lt}` not satisfied, got `{scalar}`"
     with pytest.raises(CheckError, match=match):
-        check_scalar(value, type_, lt=lt)
+        check_scalar(scalar, type_, lt=lt)
 
 
 @pytest.mark.parametrize(
@@ -218,111 +218,111 @@ def test_check_scalar_ge_gt_le_lt_invalid(operator, operator_symbol):
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "eq"),
+    ("scalar", "type_", "eq"),
     (
         pytest.param(False, bool, False, id="False == False"),
         pytest.param(0, int, 0, id="0 == 0"),
         pytest.param(0.0, float, 0.0, id="0.0 == 0.0"),
     ),
 )
-def test_check_scalar_eq(value, type_, eq):
-    assert check_scalar(value, type_, eq=eq) == value
+def test_check_scalar_eq(scalar, type_, eq):
+    assert check_scalar(scalar, type_, eq=eq) == scalar
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "eq"),
+    ("scalar", "type_", "eq"),
     (
         pytest.param(False, bool, True, id="False == True"),
         pytest.param(0, int, 1, id="0 == 1"),
         pytest.param(0.0, float, 1.0, id="0.0 == 1.0"),
     ),
 )
-def test_check_scalar_eq_fails(value, type_, eq):
-    match = f"`value == {eq}` not satisfied, got `{value}`"
+def test_check_scalar_eq_fails(scalar, type_, eq):
+    match = f"`scalar == {eq}` not satisfied, got `{scalar}`"
     with pytest.raises(CheckError, match=match):
-        check_scalar(value, type_, eq=eq)
+        check_scalar(scalar, type_, eq=eq)
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "ne"),
+    ("scalar", "type_", "ne"),
     (
         pytest.param(False, bool, True, id="False != True"),
         pytest.param(0, int, 1, id="0 != 1"),
         pytest.param(0.0, float, 1.0, id="0.0 != 1.0"),
     ),
 )
-def test_check_scalar_ne(value, type_, ne):
-    assert check_scalar(value, type_, ne=ne) == value
+def test_check_scalar_ne(scalar, type_, ne):
+    assert check_scalar(scalar, type_, ne=ne) == scalar
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "ne"),
+    ("scalar", "type_", "ne"),
     (
         pytest.param(False, bool, False, id="False != False"),
         pytest.param(0, int, 0, id="0 != 0"),
         pytest.param(0.0, float, 0.0, id="0.0 != 0.0"),
     ),
 )
-def test_check_scalar_ne_fails(value, type_, ne):
-    match = f"`value != {ne}` not satisfied, got `{value}`"
+def test_check_scalar_ne_fails(scalar, type_, ne):
+    match = f"`scalar != {ne}` not satisfied, got `{scalar}`"
     with pytest.raises(CheckError, match=match):
-        check_scalar(value, type_, ne=ne)
+        check_scalar(scalar, type_, ne=ne)
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "in_"),
+    ("scalar", "type_", "in_"),
     (
         pytest.param(False, bool, (False, True), id="False in (False, True)"),
         pytest.param(0, int, (0, 1), id="0 in (0, 1)"),
         pytest.param(0.0, float, (0.0, 1.0), id="0.0 in (0.0, 1.0)"),
     ),
 )
-def test_check_scalar_in(value, type_, in_):
-    assert check_scalar(value, type_, in_=in_) == value
+def test_check_scalar_in(scalar, type_, in_):
+    assert check_scalar(scalar, type_, in_=in_) == scalar
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "in_"),
+    ("scalar", "type_", "in_"),
     (
         pytest.param(False, bool, (True,), id="False in (True,)"),
         pytest.param(-1, int, (0, 1), id="-1 in (0, 1)"),
         pytest.param(-1.0, float, (0.0, 1.0), id="-1.0 in (0.0, 1.0)"),
     ),
 )
-def test_check_scalar_in_fails(value, type_, in_):
-    match = f"`value in {in_}` not satisfied, got `{value}`"
+def test_check_scalar_in_fails(scalar, type_, in_):
+    match = f"`scalar in {in_}` not satisfied, got `{scalar}`"
     match = match.replace("(", "\\(")
     match = match.replace(")", "\\)")
     with pytest.raises(CheckError, match=match):
-        check_scalar(value, type_, in_=in_)
+        check_scalar(scalar, type_, in_=in_)
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "not_in"),
+    ("scalar", "type_", "not_in"),
     (
         pytest.param(False, bool, (True,), id="False not in (True,)"),
         pytest.param(-1, int, (0, 1), id="-1 not in (0, 1)"),
         pytest.param(-1.0, float, (0.0, 1.0), id="-1.0 not in (0.0, 1.0)"),
     ),
 )
-def test_check_scalar_not_in(value, type_, not_in):
-    assert check_scalar(value, type_, not_in=not_in) == value
+def test_check_scalar_not_in(scalar, type_, not_in):
+    assert check_scalar(scalar, type_, not_in=not_in) == scalar
 
 
 @pytest.mark.parametrize(
-    ("value", "type_", "not_in"),
+    ("scalar", "type_", "not_in"),
     (
         pytest.param(False, bool, (False, True), id="False not in (True,)"),
         pytest.param(0, int, (0, 1), id="0 not in (0, 1)"),
         pytest.param(0.0, float, (0.0, 1.0), id="0.0 not in (0.0, 1.0)"),
     ),
 )
-def test_check_scalar_not_in_fails(value, type_, not_in):
-    match = f"`value not in {not_in}` not satisfied, got `{value}`"
+def test_check_scalar_not_in_fails(scalar, type_, not_in):
+    match = f"`scalar not in {not_in}` not satisfied, got `{scalar}`"
     match = match.replace("(", "\\(")
     match = match.replace(")", "\\)")
     with pytest.raises(CheckError, match=match):
-        check_scalar(value, type_, not_in=not_in)
+        check_scalar(scalar, type_, not_in=not_in)
 
 
 @pytest.mark.parametrize(
@@ -374,11 +374,11 @@ def test_check_sequence_invalid(sequence, type_):
 
 
 @pytest.mark.parametrize(
-    ("value_or_sequence", "type_"),
+    ("scalar_or_sequence", "type_"),
     (
         pytest.param(0, int, id="0"),
         pytest.param((0.0, 0.1, 0.2), float, id="(0.0, 0.1, 0.2)"),
     ),
 )
-def test_check_scalar_or_sequence(value_or_sequence, type_):
-    assert check_scalar_or_sequence(value_or_sequence, type_) == value_or_sequence
+def test_check_scalar_or_sequence(scalar_or_sequence, type_):
+    assert check_scalar_or_sequence(scalar_or_sequence, type_) == scalar_or_sequence

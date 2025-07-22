@@ -70,9 +70,9 @@ class CheckError(Exception):
 
 
 def check_scalar(
-    value: Any,
+    scalar: Any,
     type_: type | UnionType | tuple[Any, ...],
-    name: str = "value",
+    name: str = "scalar",
     **operators: Any,
 ) -> Any:
     type_ = _check_type(type_)
@@ -82,7 +82,7 @@ def check_scalar(
     # -----------
     # Type check
     # -----------
-    if not isinstance(value, type_):
+    if not isinstance(scalar, type_):
         if isinstance(type_, tuple):
             type_str = ", ".join(f"`{t.__qualname__}`" for t in type_[:-1])
             type_str = f"{type_str} or `{type_[-1].__qualname__}`"
@@ -91,7 +91,7 @@ def check_scalar(
 
         raise CheckError(
             f"`{name}` must be of type {type_str}, got "
-            f"`{value}` of type `{type(value).__qualname__}`"
+            f"`{scalar}` of type `{type(scalar).__qualname__}`"
         )
 
     # ----------------
@@ -107,14 +107,14 @@ def check_scalar(
             op = getattr(operator, op_key)
 
         try:
-            check_failed = not op(value, op_arg)
+            check_failed = not op(scalar, op_arg)
         except TypeError as e:
             if op_key in ("in_", "not_in"):
                 raise TypeError(f"`{op_key}` must be iterable, got `{op_arg}`")
             elif op_key in ("ge", "gt", "le", "lt"):
                 raise TypeError(
                     f"`{op_symbol}` (`{op_key}`) not supported between "
-                    f"instances of `{type(value).__qualname__}` and "
+                    f"instances of `{type(scalar).__qualname__}` and "
                     f"`{type(op_arg).__qualname__}`"
                 )
             else:
@@ -122,10 +122,10 @@ def check_scalar(
 
         if check_failed:
             raise CheckError(
-                f"`{name} {op_symbol} {op_arg}` not satisfied, got `{value}`"
+                f"`{name} {op_symbol} {op_arg}` not satisfied, got `{scalar}`"
             )
 
-    return value
+    return scalar
 
 
 def check_sequence(
@@ -142,9 +142,9 @@ def check_sequence(
     operators = _check_operators(operators)
 
     error_message = ""
-    for index, value in enumerate(sequence):
+    for index, scalar in enumerate(sequence):
         try:
-            check_scalar(value, type_, f"{name}[{index}]", **operators)
+            check_scalar(scalar, type_, f"{name}[{index}]", **operators)
         except CheckError as e:
             error_message = f"{error_message}\n  - {e}"
 
@@ -155,22 +155,22 @@ def check_sequence(
 
 
 def check_scalar_or_sequence(
-    value_or_sequence: Any | Sequence[Any],
+    scalar_or_sequence: Any | Sequence[Any],
     type_: type | UnionType | tuple[Any, ...],
     name: Optional[str] = None,
     **operators: Any,
 ) -> Any | Sequence[Any]:
-    if isinstance(value_or_sequence, Sequence):
+    if isinstance(scalar_or_sequence, Sequence):
         name = name or "sequence"
         check_function = check_sequence
     else:
-        name = name or "value"
+        name = name or "scalar"
         check_function = check_scalar
 
     type_ = _check_type(type_)
     name = _check_name(name)
     operators = _check_operators(operators)
 
-    check_function(value_or_sequence, type_, name, **operators)
+    check_function(scalar_or_sequence, type_, name, **operators)
 
-    return value_or_sequence
+    return scalar_or_sequence
