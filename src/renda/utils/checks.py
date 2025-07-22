@@ -13,7 +13,7 @@
 # limitations under the License.
 import operator
 from types import UnionType
-from typing import Any, Sequence
+from typing import Any, Optional, Sequence
 
 
 def _check_type(
@@ -133,7 +133,7 @@ def check_sequence(
     type_: type | UnionType | tuple[Any, ...],
     name: str = "sequence",
     **operators: Any,
-):
+) -> Sequence[Any]:
     if not isinstance(sequence, Sequence):
         raise CheckError(f"`{name}` must be a sequence, got `{sequence}`")
 
@@ -152,3 +152,25 @@ def check_sequence(
         raise CheckError(error_message)
 
     return sequence
+
+
+def check_scalar_or_sequence(
+    value_or_sequence: Any | Sequence[Any],
+    type_: type | UnionType | tuple[Any, ...],
+    name: Optional[str] = None,
+    **operators: Any,
+) -> Any | Sequence[Any]:
+    if isinstance(value_or_sequence, Sequence):
+        name = name or "sequence"
+        check_function = check_sequence
+    else:
+        name = name or "value"
+        check_function = check_scalar
+
+    type_ = _check_type(type_)
+    name = _check_name(name)
+    operators = _check_operators(operators)
+
+    check_function(value_or_sequence, type_, name, **operators)
+
+    return value_or_sequence

@@ -16,7 +16,12 @@ from types import NoneType
 
 import pytest
 
-from renda.utils.checks import CheckError, check_scalar, check_sequence
+from renda.utils.checks import (
+    CheckError,
+    check_scalar,
+    check_scalar_or_sequence,
+    check_sequence,
+)
 
 
 @pytest.mark.parametrize(
@@ -366,3 +371,14 @@ def test_check_sequence_invalid(sequence, type_):
     match = f"`sequence` must be a sequence, got `{sequence}`"
     with pytest.raises(CheckError, match=match):
         check_sequence(sequence, type_)
+
+
+@pytest.mark.parametrize(
+    ("value_or_sequence", "type_"),
+    (
+        pytest.param(0, int, id="0"),
+        pytest.param((0.0, 0.1, 0.2), float, id="(0.0, 0.1, 0.2)"),
+    ),
+)
+def test_check_scalar_or_sequence(value_or_sequence, type_):
+    assert check_scalar_or_sequence(value_or_sequence, type_) == value_or_sequence
