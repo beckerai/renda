@@ -137,10 +137,6 @@ def check_sequence(
     if not isinstance(sequence, Sequence):
         raise CheckError(f"`{name}` must be a sequence, got `{sequence}`")
 
-    type_ = _check_type(type_)
-    name = _check_name(name)
-    operators = _check_operators(operators)
-
     error_message = ""
     for index, scalar in enumerate(sequence):
         try:
@@ -166,10 +162,6 @@ def check_scalar_or_sequence(
     else:
         name = name or "scalar"
         check_function = check_scalar
-
-    type_ = _check_type(type_)
-    name = _check_name(name)
-    operators = _check_operators(operators)
 
     check_function(scalar_or_sequence, type_, name, **operators)
 
