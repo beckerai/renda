@@ -16,55 +16,6 @@ from types import UnionType
 from typing import Any, Optional, Sequence
 
 
-def _check_type(
-    type_: type | UnionType | tuple[Any, ...],
-) -> type | UnionType | tuple[Any, ...]:
-    try:
-        isinstance(object(), type_)
-    except TypeError:
-        raise TypeError(
-            f"`type_` must be a type, a tuple of types, or a union, got `{type_}`"
-        )
-
-    return type_
-
-
-def _check_name(name: str) -> str:
-    if not isinstance(name, str):
-        raise TypeError(f"`name` must be a `str`, got `{name}`")
-
-    return name
-
-
-_SUPPORTED_OPERATORS = {
-    "ge": ">=",
-    "gt": ">",
-    "le": "<=",
-    "lt": "<",
-    "eq": "==",
-    "ne": "!=",
-    "in_": "in",
-    "not_in": "not in",
-}
-
-
-def _check_operators(operators: Any) -> dict[str:Any]:
-    unsupported_operators = []
-    for op_key in operators.keys():
-        if op_key not in _SUPPORTED_OPERATORS:
-            unsupported_operators.append(op_key)
-
-    if len(unsupported_operators) > 0:
-        raise TypeError(
-            f"unsupported operator keyword(s) "
-            f"`{'`, `'.join(unsupported_operators)}`, "
-            f"supported operator keywords are "
-            f"`{'`, `'.join(_SUPPORTED_OPERATORS.keys())}`"
-        )
-
-    return operators
-
-
 class CheckError(Exception):
     pass
 
@@ -166,3 +117,52 @@ def check_scalar_or_sequence(
     check_function(scalar_or_sequence, type_, name, **operators)
 
     return scalar_or_sequence
+
+
+def _check_type(
+    type_: type | UnionType | tuple[Any, ...],
+) -> type | UnionType | tuple[Any, ...]:
+    try:
+        isinstance(object(), type_)
+    except TypeError:
+        raise TypeError(
+            f"`type_` must be a type, a tuple of types, or a union, got `{type_}`"
+        )
+
+    return type_
+
+
+def _check_name(name: str) -> str:
+    if not isinstance(name, str):
+        raise TypeError(f"`name` must be a `str`, got `{name}`")
+
+    return name
+
+
+_SUPPORTED_OPERATORS = {
+    "ge": ">=",
+    "gt": ">",
+    "le": "<=",
+    "lt": "<",
+    "eq": "==",
+    "ne": "!=",
+    "in_": "in",
+    "not_in": "not in",
+}
+
+
+def _check_operators(operators: Any) -> dict[str:Any]:
+    unsupported_operators = []
+    for op_key in operators.keys():
+        if op_key not in _SUPPORTED_OPERATORS:
+            unsupported_operators.append(op_key)
+
+    if len(unsupported_operators) > 0:
+        raise TypeError(
+            f"unsupported operator keyword(s) "
+            f"`{'`, `'.join(unsupported_operators)}`, "
+            f"supported operator keywords are "
+            f"`{'`, `'.join(_SUPPORTED_OPERATORS.keys())}`"
+        )
+
+    return operators
