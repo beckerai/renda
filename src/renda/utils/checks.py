@@ -13,7 +13,11 @@
 # limitations under the License.
 import operator
 from types import UnionType
-from typing import Any, Optional, Sequence
+from typing import Any, Sequence
+
+
+# The second argument of `isinstance()` must be of this type
+_TYPE_TYPE = type | UnionType | tuple[Any, ...]
 
 
 class CheckError(Exception):
@@ -22,7 +26,7 @@ class CheckError(Exception):
 
 def check_scalar(
     scalar: Any,
-    type_: type | UnionType | tuple[Any, ...],
+    type_: _TYPE_TYPE,
     name: str = "scalar",
     **operators: Any,
 ) -> Any:
@@ -37,6 +41,8 @@ def check_scalar(
         if isinstance(type_, tuple):
             type_str = ", ".join(f"`{t.__qualname__}`" for t in type_[:-1])
             type_str = f"{type_str} or `{type_[-1].__qualname__}`"
+        elif isinstance(type_, UnionType):
+            type_str = f"`{type_}`"
         else:
             type_str = f"`{type_.__qualname__}`"
 
@@ -81,7 +87,7 @@ def check_scalar(
 
 def check_sequence(
     sequence: Sequence[Any],
-    type_: type | UnionType | tuple[Any, ...],
+    type_: _TYPE_TYPE,
     name: str = "sequence",
     **operators: Any,
 ) -> Sequence[Any]:
@@ -103,25 +109,21 @@ def check_sequence(
 
 def check_scalar_or_sequence(
     scalar_or_sequence: Any | Sequence[Any],
-    type_: type | UnionType | tuple[Any, ...],
-    name: Optional[str] = None,
+    type_: _TYPE_TYPE,
+    name: str | None = None,
     **operators: Any,
 ) -> Any | Sequence[Any]:
     if isinstance(scalar_or_sequence, Sequence):
         name = name or "sequence"
-        check_function = check_sequence
+        check_sequence(scalar_or_sequence, type_, name, **operators)
     else:
         name = name or "scalar"
-        check_function = check_scalar
-
-    check_function(scalar_or_sequence, type_, name, **operators)
+        check_scalar(scalar_or_sequence, type_, name, **operators)
 
     return scalar_or_sequence
 
 
-def _check_type(
-    type_: type | UnionType | tuple[Any, ...],
-) -> type | UnionType | tuple[Any, ...]:
+def _check_type(type_: _TYPE_TYPE) -> _TYPE_TYPE:
     try:
         isinstance(object(), type_)
     except TypeError:
@@ -151,10 +153,10 @@ _SUPPORTED_OPERATORS = {
 }
 
 
-def _check_operators(operators: Any) -> dict[str:Any]:
+def _check_operators(operators: dict[str, Any]) -> dict[str, Any]:
     unsupported_operators = []
     for op_key in operators.keys():
-        if op_key not in _SUPPORTED_OPERATORS:
+        if op_key not in _SUPPORTED_OPERATORS.keys():
             unsupported_operators.append(op_key)
 
     if len(unsupported_operators) > 0:
