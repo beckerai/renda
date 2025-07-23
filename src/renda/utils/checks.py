@@ -34,6 +34,8 @@ def check_scalar(
     name = _check_name(name)
     operators = _check_operators(operators)
 
+    check_error_message = ""
+
     # -----------
     # Type check
     # -----------
@@ -46,8 +48,9 @@ def check_scalar(
         else:
             type_str = f"`{type_.__qualname__}`"
 
-        raise CheckError(
-            f"`{name}` must be of type {type_str}, got "
+        check_error_message = (
+            f"{check_error_message}\n"
+            f"  - `{name}` must be of type {type_str}, got "
             f"`{scalar}` of type `{type(scalar).__qualname__}`"
         )
 
@@ -64,7 +67,7 @@ def check_scalar(
             op = getattr(operator, op_key)
 
         try:
-            check_failed = not op(scalar, op_arg)
+            condition_not_satisfied = not op(scalar, op_arg)
         except TypeError as e:
             if op_key in ("in_", "not_in"):
                 raise TypeError(f"`{op_key}` must be iterable, got `{op_arg}`")
@@ -77,10 +80,14 @@ def check_scalar(
             else:
                 raise e  # pragma: no cover
 
-        if check_failed:
-            raise CheckError(
-                f"`{name} {op_symbol} {op_arg}` not satisfied, got `{scalar}`"
+        if condition_not_satisfied:
+            check_error_message = (
+                f"{check_error_message}\n"
+                f"  - `{name} {op_symbol} {op_arg}` not satisfied, got `{scalar}`"
             )
+
+    if len(check_error_message) > 0:
+        raise CheckError(check_error_message)
 
     return scalar
 
@@ -94,15 +101,16 @@ def check_sequence(
     if not isinstance(sequence, Sequence):
         raise CheckError(f"`{name}` must be a sequence, got `{sequence}`")
 
-    error_message = ""
+    check_error_message = ""
+
     for index, scalar in enumerate(sequence):
         try:
             check_scalar(scalar, type_, f"{name}[{index}]", **operators)
         except CheckError as e:
-            error_message = f"{error_message}\n  - {e}"
+            check_error_message = f"{check_error_message}{e}"
 
-    if len(error_message) > 0:
-        raise CheckError(error_message)
+    if len(check_error_message) > 0:
+        raise CheckError(check_error_message)
 
     return sequence
 
