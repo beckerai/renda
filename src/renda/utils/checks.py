@@ -96,16 +96,24 @@ def check_sequence(
     sequence: Sequence[Any],
     type_: _TYPE_TYPE,
     name: str = "sequence",
+    length: int | None = None,
     **operators: Any,
 ) -> Sequence[Any]:
     type_ = _check_type(type_)
     name = _check_name(name)
+    length = _check_length(length)
     operators = _check_operators(operators)
 
     if not isinstance(sequence, Sequence):
         raise CheckError(f"`{name}` must be a sequence, got `{sequence}`")
 
     check_error_message = ""
+
+    if length is not None and len(sequence) != length:
+        check_error_message = (
+            f"{check_error_message}\n  - `{name}` must have length `{length}`, "
+            f"but `len({name}) = {len(sequence)}`)"
+        )
 
     for index, scalar in enumerate(sequence):
         try:
@@ -123,14 +131,16 @@ def check_scalar_or_sequence(
     scalar_or_sequence: Any | Sequence[Any],
     type_: _TYPE_TYPE,
     name: str = "scalar_or_sequence",
+    length: int | None = None,
     **operators: Any,
 ) -> Any | Sequence[Any]:
     type_ = _check_type(type_)
     name = _check_name(name)
+    length = _check_length(length)
     operators = _check_operators(operators)
 
     if isinstance(scalar_or_sequence, Sequence):
-        check_sequence(scalar_or_sequence, type_, name, **operators)
+        check_sequence(scalar_or_sequence, type_, name, length, **operators)
     else:
         check_scalar(scalar_or_sequence, type_, name, **operators)
 
@@ -153,6 +163,13 @@ def _check_name(name: str) -> str:
         raise TypeError(f"`name` must be a `str`, got `{name}`")
 
     return name
+
+
+def _check_length(length: int | None) -> int | None:
+    if not ((isinstance(length, int) and length > 0) or length is None):
+        raise TypeError(f"`length` must be a positive `int` or `None`, got `{length}`")
+
+    return length
 
 
 _SUPPORTED_OPERATORS = {

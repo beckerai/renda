@@ -413,7 +413,7 @@ def test_check_sequence_arg_invalid(sequence):
 @pytest.mark.parametrize(
     "type_",
     (
-        pytest.param(42, id="0"),
+        pytest.param(0, id="0"),
         pytest.param("forty-two", id="forty-two"),
         pytest.param(None, id="None"),
         pytest.param(lambda: 0, id="lambda: 0"),
@@ -438,6 +438,40 @@ def test_check_sequence_name_arg_invalid(name):
     match = f"`name` must be a `str`, got `{name}`"
     with pytest.raises(TypeError, match=match):
         check_sequence((1, 2, 3), int, name=name)
+
+
+@pytest.mark.parametrize(
+    ("sequence", "length"),
+    (
+        pytest.param((1, 2, 3), 3, id="(1, 2, 3) with length=3"),
+        pytest.param((1, 2, 3), None, id="(1, 2, 3) with length=None"),
+        pytest.param((1, 2, 3, 4), 4, id="(1, 2, 3, 4) with length=4"),
+        pytest.param((1, 2, 3, 4), None, id="(1, 2, 3, 4) with length=None"),
+    ),
+)
+def test_check_sequence_length(sequence, length):
+    assert check_sequence(sequence, int, length=length) == sequence
+
+
+def test_check_sequence_length_not_satisfied():
+    match = "`sequence` must have length `4`, but `len\\(sequence\\) = 3`"
+    with pytest.raises(CheckError, match=match):
+        check_sequence((1, 2, 3), int, length=4)
+
+
+@pytest.mark.parametrize(
+    "length",
+    (
+        pytest.param(0, id="0"),
+        pytest.param(-1, id="-1"),
+        pytest.param("forty-two", id="forty-two"),
+        pytest.param(lambda: 0, id="lambda: 0"),
+    ),
+)
+def test_check_sequence_length_arg_invalid(length):
+    match = "`length` must be a positive `int` or `None`"
+    with pytest.raises(TypeError, match=match):
+        check_sequence((1, 2, 3), int, length=length)
 
 
 def test_check_sequence_unsupported_operators_keywords():
@@ -490,6 +524,21 @@ def test_check_scalar_or_sequence_name_arg_invalid(name):
         check_scalar_or_sequence(0, int, name=name)
     with pytest.raises(TypeError, match=match):
         check_scalar_or_sequence((1, 2, 3), int, name=name)
+
+
+@pytest.mark.parametrize(
+    "length",
+    (
+        pytest.param(0, id="0"),
+        pytest.param(-1, id="-1"),
+        pytest.param("forty-two", id="forty-two"),
+        pytest.param(lambda: 0, id="lambda: 0"),
+    ),
+)
+def test_check_scalar_or_sequence_length_arg_invalid(length):
+    match = "`length` must be a positive `int` or `None`"
+    with pytest.raises(TypeError, match=match):
+        check_scalar_or_sequence((1, 2, 3), int, length=length)
 
 
 def test_check_scalar_or_sequence_unsupported_operators_keywords():
