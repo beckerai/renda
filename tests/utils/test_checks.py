@@ -87,8 +87,8 @@ def test_check_scalar_name_arg_invalid(name):
 
 
 def test_check_scalar_unsupported_operators_keywords():
-    match = "unsupported operator keyword\\(s\\) `foo`, `bar`, .*"
-    operators = OrderedDict([("foo", 0), ("ge", 1), ("bar", 2)])
+    match = "unsupported operator keyword\\(s\\) `foo`, `bar`"
+    operators = OrderedDict([("foo", 0), ("ge", 1), ("bar", 2), ("lt", 3)])
     with pytest.raises(TypeError, match=match):
         check_scalar(0, int, **operators)
 
@@ -411,6 +411,43 @@ def test_check_sequence_arg_invalid(sequence):
 
 
 @pytest.mark.parametrize(
+    "type_",
+    (
+        pytest.param(42, id="0"),
+        pytest.param("forty-two", id="forty-two"),
+        pytest.param(None, id="None"),
+        pytest.param(lambda: 0, id="lambda: 0"),
+    ),
+)
+def test_check_sequence_type_arg_invalid(type_):
+    match = f"`type_` must be a type, a tuple of types, or a union, got `{type_}`"
+    with pytest.raises(TypeError, match=match):
+        check_sequence((1, 2, 3), type_)
+
+
+@pytest.mark.parametrize(
+    "name",
+    (
+        pytest.param(0, id="0"),
+        pytest.param(0.0, id="0.0"),
+        pytest.param(None, id="None"),
+        pytest.param(lambda: 0, id="lambda: 0"),
+    ),
+)
+def test_check_sequence_name_arg_invalid(name):
+    match = f"`name` must be a `str`, got `{name}`"
+    with pytest.raises(TypeError, match=match):
+        check_sequence((1, 2, 3), int, name=name)
+
+
+def test_check_sequence_unsupported_operators_keywords():
+    match = "unsupported operator keyword\\(s\\) `foo`, `bar`"
+    operators = OrderedDict([("foo", 0), ("ge", 1), ("bar", 2), ("lt", 3)])
+    with pytest.raises(TypeError, match=match):
+        check_sequence((1, 2, 3), int, **operators)
+
+
+@pytest.mark.parametrize(
     "scalar_or_sequence",
     (
         pytest.param(0, id="0"),
@@ -419,3 +456,46 @@ def test_check_sequence_arg_invalid(sequence):
 )
 def test_check_scalar_or_sequence(scalar_or_sequence):
     assert check_scalar_or_sequence(scalar_or_sequence, int) == scalar_or_sequence
+
+
+@pytest.mark.parametrize(
+    "type_",
+    (
+        pytest.param(42, id="0"),
+        pytest.param("forty-two", id="forty-two"),
+        pytest.param(None, id="None"),
+        pytest.param(lambda: 0, id="lambda: 0"),
+    ),
+)
+def test_check_scalar_or_sequence_type_arg_invalid(type_):
+    match = f"`type_` must be a type, a tuple of types, or a union, got `{type_}`"
+    with pytest.raises(TypeError, match=match):
+        check_scalar_or_sequence(0, type_)
+    with pytest.raises(TypeError, match=match):
+        check_scalar_or_sequence((1, 2, 3), type_)
+
+
+@pytest.mark.parametrize(
+    "name",
+    (
+        pytest.param(0, id="0"),
+        pytest.param(0.0, id="0.0"),
+        pytest.param(None, id="None"),
+        pytest.param(lambda: 0, id="lambda: 0"),
+    ),
+)
+def test_check_scalar_or_sequence_name_arg_invalid(name):
+    match = f"`name` must be a `str`, got `{name}`"
+    with pytest.raises(TypeError, match=match):
+        check_scalar_or_sequence(0, int, name=name)
+    with pytest.raises(TypeError, match=match):
+        check_scalar_or_sequence((1, 2, 3), int, name=name)
+
+
+def test_check_scalar_or_sequence_unsupported_operators_keywords():
+    match = "unsupported operator keyword\\(s\\) `foo`, `bar`"
+    operators = OrderedDict([("foo", 0), ("ge", 1), ("bar", 2), ("lt", 3)])
+    with pytest.raises(TypeError, match=match):
+        check_scalar_or_sequence(0, int, **operators)
+    with pytest.raises(TypeError, match=match):
+        check_scalar_or_sequence((1, 2, 3), int, **operators)

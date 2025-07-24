@@ -98,6 +98,10 @@ def check_sequence(
     name: str = "sequence",
     **operators: Any,
 ) -> Sequence[Any]:
+    type_ = _check_type(type_)
+    name = _check_name(name)
+    operators = _check_operators(operators)
+
     if not isinstance(sequence, Sequence):
         raise CheckError(f"`{name}` must be a sequence, got `{sequence}`")
 
@@ -121,6 +125,10 @@ def check_scalar_or_sequence(
     name: str = "scalar_or_sequence",
     **operators: Any,
 ) -> Any | Sequence[Any]:
+    type_ = _check_type(type_)
+    name = _check_name(name)
+    operators = _check_operators(operators)
+
     if isinstance(scalar_or_sequence, Sequence):
         check_sequence(scalar_or_sequence, type_, name, **operators)
     else:
