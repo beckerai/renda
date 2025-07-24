@@ -118,14 +118,12 @@ def check_sequence(
 def check_scalar_or_sequence(
     scalar_or_sequence: Any | Sequence[Any],
     type_: _TYPE_TYPE,
-    name: str | None = None,
+    name: str = "scalar_or_sequence",
     **operators: Any,
 ) -> Any | Sequence[Any]:
     if isinstance(scalar_or_sequence, Sequence):
-        name = name or "sequence"
         check_sequence(scalar_or_sequence, type_, name, **operators)
     else:
-        name = name or "scalar"
         check_scalar(scalar_or_sequence, type_, name, **operators)
 
     return scalar_or_sequence
