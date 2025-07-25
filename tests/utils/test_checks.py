@@ -15,11 +15,11 @@ from collections import OrderedDict
 
 import pytest
 
-from renda.utils.checks import (
-    CheckError,
-    check_scalar,
-    check_scalar_or_sequence,
-    check_sequence,
+from renda.utils._checks import (
+    _check_scalar,
+    _check_scalar_or_sequence,
+    _check_sequence,
+    _CheckError,
 )
 
 
@@ -32,7 +32,7 @@ from renda.utils.checks import (
     ),
 )
 def test_check_scalar_type(scalar, type_):
-    assert check_scalar(scalar, type_) == scalar
+    assert _check_scalar(scalar, type_) == scalar
 
 
 @pytest.mark.parametrize(
@@ -45,8 +45,8 @@ def test_check_scalar_type(scalar, type_):
 )
 def test_check_scalar_type_not_satisfied(scalar, type_):
     match = "`scalar` must be of type"
-    with pytest.raises(CheckError, match=match):
-        check_scalar(scalar, type_)
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar(scalar, type_)
 
 
 @pytest.mark.parametrize(
@@ -61,13 +61,13 @@ def test_check_scalar_type_not_satisfied(scalar, type_):
 def test_check_scalar_type_arg_invalid(type_):
     match = f"`type_` must be a type, a tuple of types, or a union, got `{type_}`"
     with pytest.raises(TypeError, match=match):
-        check_scalar(0, type_)
+        _check_scalar(0, type_)
 
 
 def test_check_scalar_name():
     try:
-        check_scalar(0, int, name="a_string", ge=1)
-    except CheckError as e:
+        _check_scalar(0, int, name="a_string", ge=1)
+    except _CheckError as e:
         assert "`a_string >= 1` not satisfied, got `0`" in str(e)
 
 
@@ -83,14 +83,14 @@ def test_check_scalar_name():
 def test_check_scalar_name_arg_invalid(name):
     match = f"`name` must be a `str`, got `{name}`"
     with pytest.raises(TypeError, match=match):
-        check_scalar(0, int, name=name)
+        _check_scalar(0, int, name=name)
 
 
 def test_check_scalar_unsupported_operators_keywords():
     match = "unsupported operator keyword\\(s\\) `foo`, `bar`"
     operators = OrderedDict([("foo", 0), ("ge", 1), ("bar", 2), ("lt", 3)])
     with pytest.raises(TypeError, match=match):
-        check_scalar(0, int, **operators)
+        _check_scalar(0, int, **operators)
 
 
 @pytest.mark.parametrize(
@@ -102,7 +102,7 @@ def test_check_scalar_unsupported_operators_keywords():
     ),
 )
 def test_check_scalar_ge(scalar, type_, ge):
-    assert check_scalar(scalar, type_, ge=ge) == scalar
+    assert _check_scalar(scalar, type_, ge=ge) == scalar
 
 
 @pytest.mark.parametrize(
@@ -115,8 +115,8 @@ def test_check_scalar_ge(scalar, type_, ge):
 )
 def test_check_scalar_ge_not_satisfied(scalar, type_, ge):
     match = f"`scalar >= {ge}` not satisfied, got `{scalar}`"
-    with pytest.raises(CheckError, match=match):
-        check_scalar(scalar, type_, ge=ge)
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar(scalar, type_, ge=ge)
 
 
 @pytest.mark.parametrize(
@@ -128,7 +128,7 @@ def test_check_scalar_ge_not_satisfied(scalar, type_, ge):
     ),
 )
 def test_check_scalar_gt(scalar, type_, gt):
-    assert check_scalar(scalar, type_, gt=gt) == scalar
+    assert _check_scalar(scalar, type_, gt=gt) == scalar
 
 
 @pytest.mark.parametrize(
@@ -141,8 +141,8 @@ def test_check_scalar_gt(scalar, type_, gt):
 )
 def test_check_scalar_gt_not_satisfied(scalar, type_, gt):
     match = f"`scalar > {gt}` not satisfied, got `{scalar}`"
-    with pytest.raises(CheckError, match=match):
-        check_scalar(scalar, type_, gt=gt)
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar(scalar, type_, gt=gt)
 
 
 @pytest.mark.parametrize(
@@ -154,7 +154,7 @@ def test_check_scalar_gt_not_satisfied(scalar, type_, gt):
     ),
 )
 def test_check_scaler_le(scalar, type_, le):
-    assert check_scalar(scalar, type_, le=le) == scalar
+    assert _check_scalar(scalar, type_, le=le) == scalar
 
 
 @pytest.mark.parametrize(
@@ -167,8 +167,8 @@ def test_check_scaler_le(scalar, type_, le):
 )
 def test_check_scalar_le_not_satisfied(scalar, type_, le):
     match = f"`scalar <= {le}` not satisfied, got `{scalar}`"
-    with pytest.raises(CheckError, match=match):
-        check_scalar(scalar, type_, le=le)
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar(scalar, type_, le=le)
 
 
 @pytest.mark.parametrize(
@@ -180,7 +180,7 @@ def test_check_scalar_le_not_satisfied(scalar, type_, le):
     ),
 )
 def test_check_scaler_lt(scalar, type_, lt):
-    assert check_scalar(scalar, type_, lt=lt) == scalar
+    assert _check_scalar(scalar, type_, lt=lt) == scalar
 
 
 @pytest.mark.parametrize(
@@ -193,8 +193,8 @@ def test_check_scaler_lt(scalar, type_, lt):
 )
 def test_check_scalar_lt_not_satisfied(scalar, type_, lt):
     match = f"`scalar < {lt}` not satisfied, got `{scalar}`"
-    with pytest.raises(CheckError, match=match):
-        check_scalar(scalar, type_, lt=lt)
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar(scalar, type_, lt=lt)
 
 
 @pytest.mark.parametrize(
@@ -213,7 +213,7 @@ def test_check_scalar_ge_gt_le_lt_arg_invalid(operator_keyword, operator_symbol)
     )
     operators = {operator_keyword: "a_string"}
     with pytest.raises(TypeError, match=match):
-        check_scalar(0, int, **operators)
+        _check_scalar(0, int, **operators)
 
 
 @pytest.mark.parametrize(
@@ -225,7 +225,7 @@ def test_check_scalar_ge_gt_le_lt_arg_invalid(operator_keyword, operator_symbol)
     ),
 )
 def test_check_scalar_eq(scalar, type_, eq):
-    assert check_scalar(scalar, type_, eq=eq) == scalar
+    assert _check_scalar(scalar, type_, eq=eq) == scalar
 
 
 @pytest.mark.parametrize(
@@ -238,8 +238,8 @@ def test_check_scalar_eq(scalar, type_, eq):
 )
 def test_check_scalar_eq_not_satisfied(scalar, type_, eq):
     match = f"`scalar == {eq}` not satisfied, got `{scalar}`"
-    with pytest.raises(CheckError, match=match):
-        check_scalar(scalar, type_, eq=eq)
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar(scalar, type_, eq=eq)
 
 
 @pytest.mark.parametrize(
@@ -251,7 +251,7 @@ def test_check_scalar_eq_not_satisfied(scalar, type_, eq):
     ),
 )
 def test_check_scalar_ne(scalar, type_, ne):
-    assert check_scalar(scalar, type_, ne=ne) == scalar
+    assert _check_scalar(scalar, type_, ne=ne) == scalar
 
 
 @pytest.mark.parametrize(
@@ -264,8 +264,8 @@ def test_check_scalar_ne(scalar, type_, ne):
 )
 def test_check_scalar_ne_not_satisfied(scalar, type_, ne):
     match = f"`scalar != {ne}` not satisfied, got `{scalar}`"
-    with pytest.raises(CheckError, match=match):
-        check_scalar(scalar, type_, ne=ne)
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar(scalar, type_, ne=ne)
 
 
 @pytest.mark.parametrize(
@@ -277,7 +277,7 @@ def test_check_scalar_ne_not_satisfied(scalar, type_, ne):
     ),
 )
 def test_check_scalar_in(scalar, type_, in_):
-    assert check_scalar(scalar, type_, in_=in_) == scalar
+    assert _check_scalar(scalar, type_, in_=in_) == scalar
 
 
 @pytest.mark.parametrize(
@@ -292,8 +292,8 @@ def test_check_scalar_in_not_satisfied(scalar, type_, in_):
     match = f"`scalar in {in_}` not satisfied, got `{scalar}`"
     match = match.replace("(", "\\(")
     match = match.replace(")", "\\)")
-    with pytest.raises(CheckError, match=match):
-        check_scalar(scalar, type_, in_=in_)
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar(scalar, type_, in_=in_)
 
 
 @pytest.mark.parametrize(
@@ -305,7 +305,7 @@ def test_check_scalar_in_not_satisfied(scalar, type_, in_):
     ),
 )
 def test_check_scalar_not_in(scalar, type_, not_in):
-    assert check_scalar(scalar, type_, not_in=not_in) == scalar
+    assert _check_scalar(scalar, type_, not_in=not_in) == scalar
 
 
 @pytest.mark.parametrize(
@@ -320,8 +320,8 @@ def test_check_scalar_not_in_not_satisfied(scalar, type_, not_in):
     match = f"`scalar not in {not_in}` not satisfied, got `{scalar}`"
     match = match.replace("(", "\\(")
     match = match.replace(")", "\\)")
-    with pytest.raises(CheckError, match=match):
-        check_scalar(scalar, type_, not_in=not_in)
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar(scalar, type_, not_in=not_in)
 
 
 @pytest.mark.parametrize(
@@ -335,7 +335,7 @@ def test_check_scalar_in_not_in_arg_invalid(operator):
     match = f"`{operator}` must be iterable, got `0`"
     operators = {operator: 0}
     with pytest.raises(TypeError, match=match):
-        check_scalar(0, int, **operators)
+        _check_scalar(0, int, **operators)
 
 
 @pytest.mark.parametrize(
@@ -347,7 +347,7 @@ def test_check_scalar_in_not_in_arg_invalid(operator):
     ),
 )
 def test_check_sequence(sequence, type_):
-    assert check_sequence(sequence, type_) == sequence
+    assert _check_sequence(sequence, type_) == sequence
 
 
 @pytest.mark.parametrize(
@@ -390,8 +390,8 @@ def test_check_sequence_conditions_not_satisfied(sequence, type_, operators, mat
     match = ".*\\n.*".join(match)
     match = match.replace("[", "\\[")
     match = match.replace("]", "\\]")
-    with pytest.raises(CheckError, match=match):
-        check_sequence(sequence, type_, **operators)
+    with pytest.raises(_CheckError, match=match):
+        _check_sequence(sequence, type_, **operators)
 
 
 @pytest.mark.parametrize(
@@ -406,8 +406,8 @@ def test_check_sequence_conditions_not_satisfied(sequence, type_, operators, mat
 )
 def test_check_sequence_arg_invalid(sequence):
     match = f"`sequence` must be a sequence, got `{sequence}`"
-    with pytest.raises(CheckError, match=match):
-        check_sequence(sequence, int)
+    with pytest.raises(_CheckError, match=match):
+        _check_sequence(sequence, int)
 
 
 @pytest.mark.parametrize(
@@ -422,7 +422,7 @@ def test_check_sequence_arg_invalid(sequence):
 def test_check_sequence_type_arg_invalid(type_):
     match = f"`type_` must be a type, a tuple of types, or a union, got `{type_}`"
     with pytest.raises(TypeError, match=match):
-        check_sequence((1, 2, 3), type_)
+        _check_sequence((1, 2, 3), type_)
 
 
 @pytest.mark.parametrize(
@@ -437,7 +437,7 @@ def test_check_sequence_type_arg_invalid(type_):
 def test_check_sequence_name_arg_invalid(name):
     match = f"`name` must be a `str`, got `{name}`"
     with pytest.raises(TypeError, match=match):
-        check_sequence((1, 2, 3), int, name=name)
+        _check_sequence((1, 2, 3), int, name=name)
 
 
 @pytest.mark.parametrize(
@@ -450,13 +450,13 @@ def test_check_sequence_name_arg_invalid(name):
     ),
 )
 def test_check_sequence_length(sequence, length):
-    assert check_sequence(sequence, int, length=length) == sequence
+    assert _check_sequence(sequence, int, length=length) == sequence
 
 
 def test_check_sequence_length_not_satisfied():
     match = "`sequence` must have length `4`, but `len\\(sequence\\) = 3`"
-    with pytest.raises(CheckError, match=match):
-        check_sequence((1, 2, 3), int, length=4)
+    with pytest.raises(_CheckError, match=match):
+        _check_sequence((1, 2, 3), int, length=4)
 
 
 @pytest.mark.parametrize(
@@ -471,14 +471,14 @@ def test_check_sequence_length_not_satisfied():
 def test_check_sequence_length_arg_invalid(length):
     match = "`length` must be a positive `int` or `None`"
     with pytest.raises(TypeError, match=match):
-        check_sequence((1, 2, 3), int, length=length)
+        _check_sequence((1, 2, 3), int, length=length)
 
 
 def test_check_sequence_unsupported_operators_keywords():
     match = "unsupported operator keyword\\(s\\) `foo`, `bar`"
     operators = OrderedDict([("foo", 0), ("ge", 1), ("bar", 2), ("lt", 3)])
     with pytest.raises(TypeError, match=match):
-        check_sequence((1, 2, 3), int, **operators)
+        _check_sequence((1, 2, 3), int, **operators)
 
 
 @pytest.mark.parametrize(
@@ -489,7 +489,7 @@ def test_check_sequence_unsupported_operators_keywords():
     ),
 )
 def test_check_scalar_or_sequence(scalar_or_sequence):
-    assert check_scalar_or_sequence(scalar_or_sequence, int) == scalar_or_sequence
+    assert _check_scalar_or_sequence(scalar_or_sequence, int) == scalar_or_sequence
 
 
 @pytest.mark.parametrize(
@@ -504,9 +504,9 @@ def test_check_scalar_or_sequence(scalar_or_sequence):
 def test_check_scalar_or_sequence_type_arg_invalid(type_):
     match = f"`type_` must be a type, a tuple of types, or a union, got `{type_}`"
     with pytest.raises(TypeError, match=match):
-        check_scalar_or_sequence(0, type_)
+        _check_scalar_or_sequence(0, type_)
     with pytest.raises(TypeError, match=match):
-        check_scalar_or_sequence((1, 2, 3), type_)
+        _check_scalar_or_sequence((1, 2, 3), type_)
 
 
 @pytest.mark.parametrize(
@@ -521,9 +521,9 @@ def test_check_scalar_or_sequence_type_arg_invalid(type_):
 def test_check_scalar_or_sequence_name_arg_invalid(name):
     match = f"`name` must be a `str`, got `{name}`"
     with pytest.raises(TypeError, match=match):
-        check_scalar_or_sequence(0, int, name=name)
+        _check_scalar_or_sequence(0, int, name=name)
     with pytest.raises(TypeError, match=match):
-        check_scalar_or_sequence((1, 2, 3), int, name=name)
+        _check_scalar_or_sequence((1, 2, 3), int, name=name)
 
 
 @pytest.mark.parametrize(
@@ -538,13 +538,13 @@ def test_check_scalar_or_sequence_name_arg_invalid(name):
 def test_check_scalar_or_sequence_length_arg_invalid(length):
     match = "`length` must be a positive `int` or `None`"
     with pytest.raises(TypeError, match=match):
-        check_scalar_or_sequence((1, 2, 3), int, length=length)
+        _check_scalar_or_sequence((1, 2, 3), int, length=length)
 
 
 def test_check_scalar_or_sequence_unsupported_operators_keywords():
     match = "unsupported operator keyword\\(s\\) `foo`, `bar`"
     operators = OrderedDict([("foo", 0), ("ge", 1), ("bar", 2), ("lt", 3)])
     with pytest.raises(TypeError, match=match):
-        check_scalar_or_sequence(0, int, **operators)
+        _check_scalar_or_sequence(0, int, **operators)
     with pytest.raises(TypeError, match=match):
-        check_scalar_or_sequence((1, 2, 3), int, **operators)
+        _check_scalar_or_sequence((1, 2, 3), int, **operators)
