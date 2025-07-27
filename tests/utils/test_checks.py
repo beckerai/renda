@@ -111,10 +111,21 @@ def test_check_scalar_ge(scalar, type_, ge):
         pytest.param(False, bool, True, id="False >= True"),
         pytest.param(0, int, 1, id="0 >= 1"),
         pytest.param(0.0, float, 1.0, id="0.0 >= 1.0"),
+        #
+        pytest.param(0.0, int, 1, id="0.0 >= 1"),
+        pytest.param(0, float, 1.0, id="0 >= 1.0"),
     ),
 )
 def test_check_scalar_ge_not_satisfied(scalar, type_, ge):
-    match = f"`scalar >= {ge}` not satisfied, got `{scalar}`"
+    if isinstance(scalar, type_):
+        match = f"^\n  - `scalar >= {ge}` not satisfied, got `{scalar}`$"
+    else:
+        match = (
+            f"^\n"
+            f"  - `scalar` must be of type `.*`, got `{scalar}` of type `.*`\n"
+            f"  - `scalar >= {ge}` not satisfied, got `{scalar}`$"
+        )
+
     with pytest.raises(_CheckError, match=match):
         _check_scalar(scalar, type_, ge=ge)
 
@@ -214,6 +225,42 @@ def test_check_scalar_ge_gt_le_lt_arg_invalid(operator_keyword, operator_symbol)
     operators = {operator_keyword: "a_string"}
     with pytest.raises(TypeError, match=match):
         _check_scalar(0, int, **operators)
+
+
+@pytest.mark.parametrize(
+    ("scalar", "type_", "operator_keyword", "operator_symbol"),
+    (
+        pytest.param("a_string", str, "ge", ">=", id="ge"),
+        pytest.param("a_string", str, "gt", ">", id="gt"),
+        pytest.param("a_string", str, "le", "<=", id="le"),
+        pytest.param("a_string", str, "lt", "<", id="lt"),
+        #
+        pytest.param("a_string", int, "ge", ">=", id="ge"),
+        pytest.param("a_string", int, "gt", ">", id="gt"),
+        pytest.param("a_string", int, "le", "<=", id="le"),
+        pytest.param("a_string", int, "lt", "<", id="lt"),
+    ),
+)
+def test_check_scalar_arg_incompatible_with_ge_gt_le_lt(
+    scalar,
+    type_,
+    operator_keyword,
+    operator_symbol,
+):
+    if isinstance(scalar, type_):
+        error = TypeError
+        match = (
+            f"`{operator_symbol}` \\(`{operator_keyword}`\\) not supported "
+            f"between instances of `str` and `int`"
+        )
+    else:
+        error = _CheckError
+        match = "`scalar` must be of type `int`, got `a_string` of type `str`"
+
+    operators = {operator_keyword: 0}
+
+    with pytest.raises(error, match=match):
+        _check_scalar("a_string", type_, **operators)
 
 
 @pytest.mark.parametrize(
@@ -325,15 +372,15 @@ def test_check_scalar_not_in_not_satisfied(scalar, type_, not_in):
 
 
 @pytest.mark.parametrize(
-    "operator",
+    "operator_keyword",
     (
         pytest.param("in_", id="in_"),
         pytest.param("not_in", id="not_in"),
     ),
 )
-def test_check_scalar_in_not_in_arg_invalid(operator):
-    match = f"`{operator}` must be iterable, got `0`"
-    operators = {operator: 0}
+def test_check_scalar_in_not_in_arg_invalid(operator_keyword):
+    match = f"`{operator_keyword}` must be iterable, got `0`"
+    operators = {operator_keyword: 0}
     with pytest.raises(TypeError, match=match):
         _check_scalar(0, int, **operators)
 

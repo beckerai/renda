@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import operator
+import re
 from types import UnionType
 from typing import Any, Sequence
+
+from renda.utils._messages import _BUG_MESSAGE
 
 
 # The second argument of `isinstance()` must be of this type
@@ -39,7 +42,9 @@ def _check_scalar(
     # -----------
     # Type check
     # -----------
-    if not isinstance(scalar, type_):
+    type_condition_not_satisfied = not isinstance(scalar, type_)
+
+    if type_condition_not_satisfied:
         if isinstance(type_, tuple):
             type_str = ", ".join(f"`{t.__qualname__}`" for t in type_[:-1])
             type_str = f"{type_str} or `{type_[-1].__qualname__}`"
@@ -59,6 +64,7 @@ def _check_scalar(
     # ----------------
     for op_key, op_arg in operators.items():
         op_symbol = __SUPPORTED_OPERATORS[op_key]
+
         if op_key == "in_":
             op = lambda a, b: operator.contains(b, a)  # noqa: E731
         elif op_key == "not_in":
@@ -67,20 +73,36 @@ def _check_scalar(
             op = getattr(operator, op_key)
 
         try:
-            condition_not_satisfied = not op(scalar, op_arg)
+            op_condition_not_satisfied = not op(scalar, op_arg)
         except TypeError as e:
-            if op_key in ("in_", "not_in"):
-                raise TypeError(f"`{op_key}` must be iterable, got `{op_arg}`")
-            elif op_key in ("ge", "gt", "le", "lt"):
-                raise TypeError(
-                    f"`{op_symbol}` (`{op_key}`) not supported between "
-                    f"instances of `{type(scalar).__qualname__}` and "
-                    f"`{type(op_arg).__qualname__}`"
-                )
+            if type_condition_not_satisfied:
+                # We assume that this is a consequential error and that passing
+                # a scalar of the correct type will fix this
+                continue
             else:
-                raise e  # pragma: no cover
+                # We are using _check_scalar incorrectly
 
-        if condition_not_satisfied:
+                # Known incorrect uses
+                if op_key in ("ge", "gt", "le", "lt"):
+                    p = "^'.*' not supported between instances of '.*' and '.*'$"
+                    if re.match(p, str(e)):
+                        raise TypeError(
+                            f"`{op_symbol}` (`{op_key}`) not supported between "
+                            f"instances of `{type(scalar).__qualname__}` and "
+                            f"`{type(op_arg).__qualname__}`{_BUG_MESSAGE}"
+                        )
+                elif op_key in ("in_", "not_in"):
+                    p = "^argument of type .* is not iterable$"
+                    if re.match(p, str(e)):
+                        raise TypeError(
+                            f"`{op_key}` must be iterable, got `{op_arg}`"
+                            f"{_BUG_MESSAGE}`"
+                        )
+
+                # Unknown incorrect uses
+                raise TypeError(f"{e}{_BUG_MESSAGE}")  # pragma: no cover
+
+        if op_condition_not_satisfied:
             check_error_message = (
                 f"{check_error_message}\n"
                 f"  - `{name} {op_symbol} {op_arg}` not satisfied, got `{scalar}`"
@@ -112,7 +134,7 @@ def _check_sequence(
     if length is not None and len(sequence) != length:
         check_error_message = (
             f"{check_error_message}\n  - `{name}` must have length `{length}`, "
-            f"but `len({name}) = {len(sequence)}`)"
+            f"but `len({name}) = {len(sequence)}`"
         )
 
     for index, scalar in enumerate(sequence):
