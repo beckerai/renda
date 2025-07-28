@@ -454,7 +454,7 @@ def test_check_sequence_length_not_satisfied():
     (
         pytest.param(0, id="0"),
         pytest.param(-1, id="-1"),
-        pytest.param("forty-two", id="forty-two"),
+        pytest.param("zero", id="zero"),
         pytest.param(lambda: 0, id="lambda: 0"),
     ),
 )
@@ -472,11 +472,12 @@ def test_check_sequence_operators_key_invalid():
 
 
 @pytest.mark.parametrize(
-    ("sequence", "type_", "operators", "match"),
+    ("sequence", "type_", "length", "operators", "match"),
     (
         pytest.param(
             (False, True, 2, 3.0),
             bool,
+            4,
             {"le": True},
             (
                 "^\n  - `sequence\\[2\\]` must be of type `bool`, got .*\n"
@@ -489,6 +490,7 @@ def test_check_sequence_operators_key_invalid():
         pytest.param(
             (False, 1, 2, 3.0),
             int,
+            4,
             {"ge": 1},
             (
                 "^\n  - `sequence\\[0\\] >= 1` not satisfied, got .*\n"
@@ -499,9 +501,11 @@ def test_check_sequence_operators_key_invalid():
         pytest.param(
             (0.0, True, 2.0, 3.0),
             float,
+            5,
             {"gt": 0.0, "lt": 3.0},
             (
-                "^\n  - `sequence\\[0\\] > 0.0` not satisfied, got .*\n"
+                "^\n  - `sequence` must have length `5`, but .*\n"
+                "  - `sequence\\[0\\] > 0.0` not satisfied, got .*\n"
                 "  - `sequence\\[1\\]` must be of type `float`, got .*\n"
                 "  - `sequence\\[3\\] < 3.0` not satisfied"
             ),
@@ -510,9 +514,11 @@ def test_check_sequence_operators_key_invalid():
         pytest.param(
             (0, 1j, 2j, 3j, 4j, 5),
             complex,
+            5,
             {"not_in": (2j, 4j)},
             (
-                "^\n  - `sequence\\[0\\]` must be of type `complex`, got .*\n"
+                "^\n  - `sequence` must have length `5`, but .*\n"
+                "  - `sequence\\[0\\]` must be of type `complex`, got .*\n"
                 "  - `sequence\\[2\\] not in \\(2j, 4j\\)` not satisfied, got .*\n"
                 "  - `sequence\\[4\\] not in \\(2j, 4j\\)` not satisfied, got .*\n"
                 "  - `sequence\\[5\\]` must be of type `complex`, got"
@@ -524,11 +530,12 @@ def test_check_sequence_operators_key_invalid():
 def test_check_sequence_multiple_conditions_not_satisfied(
     sequence,
     type_,
+    length,
     operators,
     match,
 ):
     with pytest.raises(_CheckError, match=match):
-        _check_sequence(sequence, type_, **operators)
+        _check_sequence(sequence, type_, length=length, **operators)
 
 
 @pytest.mark.parametrize(
