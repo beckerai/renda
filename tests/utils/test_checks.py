@@ -31,7 +31,7 @@ from renda.utils._checks import (
         pytest.param(1.0, float, id="float"),
     ),
 )
-def test_check_scalar_type(scalar, type_):
+def test_check_scalar_type_condition_satisfied(scalar, type_):
     assert _check_scalar(scalar, type_) == scalar
 
 
@@ -43,7 +43,7 @@ def test_check_scalar_type(scalar, type_):
         pytest.param(1.0, (bool, int), id="float vs. (bool, int)"),
     ),
 )
-def test_check_scalar_type_not_satisfied(scalar, type_):
+def test_check_scalar_type_condition_not_satisfied(scalar, type_):
     match = "`scalar` must be of type `.*`, got `.*` of type `.*`"
     with pytest.raises(_CheckError, match=match):
         _check_scalar(scalar, type_)
@@ -64,11 +64,10 @@ def test_check_scalar_type_arg_invalid(type_):
         _check_scalar(0, type_)
 
 
-def test_check_scalar_name():
-    try:
-        _check_scalar(0, int, name="a_string", ge=1)
-    except _CheckError as e:
-        assert "`a_string >= 1` not satisfied, got `0`" in str(e)
+def test_check_scalar_name_arg_valid():
+    match = "`a_string` must be of type `.*`, got `.*` of type `.*`"
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar(0, float, name="a_string")
 
 
 @pytest.mark.parametrize(
@@ -120,6 +119,9 @@ def __get_pytest_params(*args):
                 (False, bool, False),  # (scalar, type_, op_arg)
                 (0, int, 0),
                 (0.0, float, 0.0),
+                # `op_arg` doesn't have to match type_
+                (0, int, 0.0),
+                (0.0, float, 0),
             ),
         ),
         (
@@ -128,6 +130,9 @@ def __get_pytest_params(*args):
                 (True, bool, False),
                 (1, int, 0),
                 (1.0, float, 0.0),
+                # `op_arg` doesn't have to match type_
+                (1, int, 0.0),
+                (1.0, float, 0),
             ),
         ),
         (
@@ -136,6 +141,9 @@ def __get_pytest_params(*args):
                 (True, bool, True),
                 (1, int, 1),
                 (1.0, float, 1.0),
+                # `op_arg` doesn't have to match `type_`
+                (1, int, 1.0),
+                (1.0, float, 1),
             ),
         ),
         (
@@ -144,6 +152,9 @@ def __get_pytest_params(*args):
                 (False, bool, True),
                 (0, int, 1),
                 (0.0, float, 1.0),
+                # `op_arg` doesn't have to match `type_`
+                (0, int, 1.0),
+                (0.0, float, 1),
             ),
         ),
         (
@@ -152,6 +163,9 @@ def __get_pytest_params(*args):
                 (False, bool, False),
                 (0, int, 0),
                 (0.0, float, 0.0),
+                # `op_arg` doesn't have to match `type_`
+                (0, int, 0.0),
+                (0.0, float, 0),
             ),
         ),
         (
@@ -160,6 +174,9 @@ def __get_pytest_params(*args):
                 (False, bool, True),
                 (0, int, 1),
                 (0.0, float, 1.0),
+                # `op_arg` doesn't have to match `type_`
+                (0, int, 1.0),
+                (0.0, float, 1),
             ),
         ),
         (
@@ -168,6 +185,9 @@ def __get_pytest_params(*args):
                 (False, bool, (False, True)),
                 (0, int, (0, 1)),
                 (0.0, float, (0.0, 1.0)),
+                # `op_arg` doesn't have to match `type_`
+                (0, int, (0.0, 1.0)),
+                (0.0, float, (0, 1)),
             ),
         ),
         (
@@ -176,13 +196,17 @@ def __get_pytest_params(*args):
                 (False, bool, (True,)),
                 (-1, int, (0, 1)),
                 (-1.0, float, (0.0, 1.0)),
+                # `op_arg` doesn't have to match `type_`
+                (-1, int, (0.0, 1.0)),
+                (-1.0, float, (0, 1)),
             ),
         ),
     ),
 )
-def test_check_scalar_operators(op_key, op_symbol, scalar, type_, op_arg):
-    operators = {op_key: op_arg}
-    assert _check_scalar(scalar, type_, **operators) == scalar
+def test_check_scalar_operator_condition_satisfied(
+    op_key, op_symbol, scalar, type_, op_arg
+):
+    assert _check_scalar(scalar, type_, **{op_key: op_arg}) == scalar
 
 
 @pytest.mark.parametrize(
@@ -194,6 +218,7 @@ def test_check_scalar_operators(op_key, op_symbol, scalar, type_, op_arg):
                 (False, bool, True),  # (scalar, type_, op_arg)
                 (0, int, 1),
                 (0.0, float, 1.0),
+                # `scalar` doesn't have to match `type_`, but the error will be listed
                 (0.0, int, 1),
                 (0, float, 1.0),
             ),
@@ -204,6 +229,7 @@ def test_check_scalar_operators(op_key, op_symbol, scalar, type_, op_arg):
                 (False, bool, False),
                 (0, int, 0),
                 (0.0, float, 0.0),
+                # `scalar` doesn't have to match `type_`, but the error will be listed
                 (0.0, int, 0),
                 (0, float, 0.0),
             ),
@@ -214,6 +240,7 @@ def test_check_scalar_operators(op_key, op_symbol, scalar, type_, op_arg):
                 (True, bool, False),
                 (1, int, 0),
                 (1.0, float, 0.0),
+                # `scalar` doesn't have to match `type_`, but the error will be listed
                 (1.0, int, 0),
                 (1, float, 0.0),
             ),
@@ -224,6 +251,7 @@ def test_check_scalar_operators(op_key, op_symbol, scalar, type_, op_arg):
                 (True, bool, True),
                 (1, int, 1),
                 (1.0, float, 1.0),
+                # `scalar` doesn't have to match `type_`, but the error will be listed
                 (1.0, int, 1),
                 (1, float, 1.0),
             ),
@@ -234,6 +262,9 @@ def test_check_scalar_operators(op_key, op_symbol, scalar, type_, op_arg):
                 (False, bool, True),
                 (0, int, 1),
                 (0.0, float, 1.0),
+                # `scalar` doesn't have to match `type_`, but the error will be listed
+                (0.0, int, 1),
+                (0, float, 1.0),
             ),
         ),
         (
@@ -242,6 +273,9 @@ def test_check_scalar_operators(op_key, op_symbol, scalar, type_, op_arg):
                 (False, bool, False),
                 (0, int, 0),
                 (0.0, float, 0.0),
+                # `scalar` doesn't have to match `type_`, but the error will be listed
+                (0.0, int, 0),
+                (0, float, 0.0),
             ),
         ),
         (
@@ -250,6 +284,9 @@ def test_check_scalar_operators(op_key, op_symbol, scalar, type_, op_arg):
                 (False, bool, (True,)),
                 (-1, int, (0, 1)),
                 (-1.0, float, (0.0, 1.0)),
+                # `scalar` doesn't have to match `type_`, but the error will be listed
+                (-1.0, int, (0, 1)),
+                (-1, float, (0.0, 1.0)),
             ),
         ),
         (
@@ -258,11 +295,16 @@ def test_check_scalar_operators(op_key, op_symbol, scalar, type_, op_arg):
                 (False, bool, (False, True)),
                 (0, int, (0, 1)),
                 (0.0, float, (0.0, 1.0)),
+                # `scalar` doesn't have to match `type_`, but the error will be listed
+                (0.0, int, (0, 1)),
+                (0, float, (0.0, 1.0)),
             ),
         ),
     ),
 )
-def test_check_scalar_operators_not_satisfied(op_key, op_symbol, scalar, type_, op_arg):
+def test_check_scalar_operator_condition_not_satisfied(
+    op_key, op_symbol, scalar, type_, op_arg
+):
     if isinstance(scalar, type_):
         match = "^\n  - `scalar .{1,6} .*` not satisfied, got `.*`$"
     else:
@@ -273,10 +315,8 @@ def test_check_scalar_operators_not_satisfied(op_key, op_symbol, scalar, type_, 
     match = match.replace("(", "\\(")
     match = match.replace(")", "\\)")
 
-    operators = {op_key: op_arg}
-
     with pytest.raises(_CheckError, match=match):
-        _check_scalar(scalar, type_, **operators)
+        _check_scalar(scalar, type_, **{op_key: op_arg})
 
 
 @pytest.mark.parametrize(
@@ -290,7 +330,7 @@ def test_check_scalar_operators_not_satisfied(op_key, op_symbol, scalar, type_, 
         pytest.param("not_in", "not in", 0, int, 0, id="not_in"),
     ),
 )
-def test_check_scalar_operators_arg_invalid(op_key, op_symbol, scalar, type_, op_arg):
+def test_check_scalar_operator_arg_invalid(op_key, op_symbol, scalar, type_, op_arg):
     if op_key in ("ge", "gt", "le", "lt"):
         match = (
             "^`.{1,6}` \\(`.{2,6}`\\) not supported between instances of `.*` and `.*`"
@@ -299,14 +339,15 @@ def test_check_scalar_operators_arg_invalid(op_key, op_symbol, scalar, type_, op
         match = "^`.{2,6}` must be iterable, got `.*`"
     else:
         match = ""
-    operators = {op_key: op_arg}
+
     with pytest.raises(TypeError, match=match):
-        _check_scalar(scalar, type_, **operators)
+        _check_scalar(scalar, type_, **{op_key: op_arg})
 
 
-def test_check_scalar_operators_key_invalid():
+def test_check_scalar_operator_unsupported():
     match = "^unsupported operator keyword\\(s\\) `foo`, `bar`"
     operators = OrderedDict([("foo", 0), ("ge", 1), ("bar", 2), ("lt", 3)])
+
     with pytest.raises(TypeError, match=match):
         _check_scalar(0, int, **operators)
 
@@ -344,7 +385,7 @@ def test_check_scalar_operators_key_invalid():
         ),
     ),
 )
-def test_check_scalar_operators_scalar_invalid(
+def test_check_scalar_operator_not_applicable_to_scalar(
     op_key,
     op_symbol,
     scalar,
@@ -366,22 +407,8 @@ def test_check_scalar_operators_scalar_invalid(
         error = _CheckError
         match = "`scalar` must be of type `.*`, got `.*` of type `.*`"
 
-    operators = {op_key: op_arg}
-
     with pytest.raises(error, match=match):
-        _check_scalar(scalar, type_, **operators)
-
-
-@pytest.mark.parametrize(
-    ("sequence", "type_"),
-    (
-        pytest.param((False, True), bool, id="bool"),
-        pytest.param([1, 2, 3], int, id="int"),
-        pytest.param([1.0, 2.0, 3.0], float, id="float"),
-    ),
-)
-def test_check_sequence(sequence, type_):
-    assert _check_sequence(sequence, type_) == sequence
+        _check_scalar(scalar, type_, **{op_key: op_arg})
 
 
 @pytest.mark.parametrize(
@@ -394,17 +421,43 @@ def test_check_sequence(sequence, type_):
         pytest.param(lambda: 0, id="function"),
     ),
 )
-def test_check_sequence_arg_invalid(sequence):
-    match = "^`sequence` must be a sequence, got `.*`$"
+def test_check_sequence_sequence_arg_invalid(sequence):
+    match = "`sequence` must be a sequence with elements of type `.*`, got `.*`"
     with pytest.raises(_CheckError, match=match):
         _check_sequence(sequence, int)
+
+
+@pytest.mark.parametrize(
+    ("sequence", "type_"),
+    (
+        pytest.param((False, True), bool, id="bool"),
+        pytest.param([1, 2, 3], int, id="int"),
+        pytest.param([1.0, 2.0, 3.0], float, id="float"),
+    ),
+)
+def test_check_sequence_type_condition_satisfied(sequence, type_):
+    assert _check_sequence(sequence, type_) == sequence
+
+
+@pytest.mark.parametrize(
+    ("sequence", "type_"),
+    (
+        pytest.param((0, True), bool, id="bool"),
+        pytest.param([1.0, 2, 3], int, id="int"),
+        pytest.param([1, 2.0, 3.0], float, id="float"),
+    ),
+)
+def test_check_sequence_type_condition_not_satisfied(sequence, type_):
+    match = "`sequence` must be a sequence with elements of type `.*`, got `.*`"
+    with pytest.raises(_CheckError, match=match):
+        _check_sequence(sequence, type_)
 
 
 @pytest.mark.parametrize(
     "type_",
     (
         pytest.param(0, id="0"),
-        pytest.param("forty-two", id="forty-two"),
+        pytest.param("zero", id="zero"),
         pytest.param(None, id="None"),
         pytest.param(lambda: 0, id="lambda: 0"),
     ),
@@ -413,6 +466,12 @@ def test_check_sequence_type_arg_invalid(type_):
     match = "^`type_` must be a type, a tuple of types, or a union, got `.*`$"
     with pytest.raises(TypeError, match=match):
         _check_sequence((1, 2, 3), type_)
+
+
+def test_check_sequence_name_arg_valid():
+    match = "`a_string` must be a sequence with elements of type `.*`, got `.*`"
+    with pytest.raises(_CheckError, match=match):
+        _check_sequence((1, 2, 3), float, name="a_string")
 
 
 @pytest.mark.parametrize(
@@ -433,17 +492,17 @@ def test_check_sequence_name_arg_invalid(name):
 @pytest.mark.parametrize(
     ("sequence", "length"),
     (
-        pytest.param((1, 2, 3), 3, id="(1, 2, 3) with length=3"),
+        pytest.param((1, 2), 2, id="(1, 2) with length=3"),
+        pytest.param((1, 2), None, id="(1, 2) with length=None"),
+        pytest.param((1, 2, 3), 3, id="(1, 2, 3) with length=4"),
         pytest.param((1, 2, 3), None, id="(1, 2, 3) with length=None"),
-        pytest.param((1, 2, 3, 4), 4, id="(1, 2, 3, 4) with length=4"),
-        pytest.param((1, 2, 3, 4), None, id="(1, 2, 3, 4) with length=None"),
     ),
 )
-def test_check_sequence_length(sequence, length):
+def test_check_sequence_length_condition_satisfied(sequence, length):
     assert _check_sequence(sequence, int, length=length) == sequence
 
 
-def test_check_sequence_length_not_satisfied():
+def test_check_sequence_length_condition_not_satisfied():
     match = "`sequence` must have length `4`, but `len\\(sequence\\) = 3`"
     with pytest.raises(_CheckError, match=match):
         _check_sequence((1, 2, 3), int, length=4)
@@ -464,9 +523,10 @@ def test_check_sequence_length_arg_invalid(length):
         _check_sequence((1, 2, 3), int, length=length)
 
 
-def test_check_sequence_operators_key_invalid():
+def test_check_sequence_operator_unsupported():
     match = "^unsupported operator keyword\\(s\\) `foo`, `bar`"
     operators = OrderedDict([("foo", 0), ("ge", 1), ("bar", 2), ("lt", 3)])
+
     with pytest.raises(TypeError, match=match):
         _check_sequence((1, 2, 3), int, **operators)
 
@@ -480,10 +540,11 @@ def test_check_sequence_operators_key_invalid():
             4,
             {"le": True},
             (
-                "^\n  - `sequence\\[2\\]` must be of type `bool`, got .*\n"
-                "  - `sequence\\[2\\] <= True` not satisfied, got .*\n"
-                "  - `sequence\\[3\\]` must be of type `bool`, got .*\n"
-                "  - `sequence\\[3] <= True` not satisfied, got"
+                "^\n  - `s` must be a sequence with elements of type `.*`, got .*\n"
+                "  - `s\\[2\\]` must be of type `bool`, got .*\n"
+                "  - `s\\[2\\] <= True` not satisfied, got .*\n"
+                "  - `s\\[3\\]` must be of type `bool`, got .*\n"
+                "  - `s\\[3] <= True` not satisfied, got"
             ),
             id="scenario0",
         ),
@@ -493,8 +554,9 @@ def test_check_sequence_operators_key_invalid():
             4,
             {"ge": 1},
             (
-                "^\n  - `sequence\\[0\\] >= 1` not satisfied, got .*\n"
-                "  - `sequence\\[3\\]` must be of type `int`, got"
+                "^\n  - `s` must be a sequence with elements of type `.*`, got .*\n"
+                "  - `s\\[0\\] >= 1` not satisfied, got .*\n"
+                "  - `s\\[3\\]` must be of type `int`, got"
             ),
             id="scenario1",
         ),
@@ -504,10 +566,11 @@ def test_check_sequence_operators_key_invalid():
             5,
             {"gt": 0.0, "lt": 3.0},
             (
-                "^\n  - `sequence` must have length `5`, but .*\n"
-                "  - `sequence\\[0\\] > 0.0` not satisfied, got .*\n"
-                "  - `sequence\\[1\\]` must be of type `float`, got .*\n"
-                "  - `sequence\\[3\\] < 3.0` not satisfied"
+                "^\n  - `s` must be a sequence with elements of type `.*`, got .*\n"
+                "  - `s` must have length `5`, but .*\n"
+                "  - `s\\[0\\] > 0.0` not satisfied, got .*\n"
+                "  - `s\\[1\\]` must be of type `float`, got .*\n"
+                "  - `s\\[3\\] < 3.0` not satisfied"
             ),
             id="scenario2",
         ),
@@ -517,17 +580,18 @@ def test_check_sequence_operators_key_invalid():
             5,
             {"not_in": (2j, 4j)},
             (
-                "^\n  - `sequence` must have length `5`, but .*\n"
-                "  - `sequence\\[0\\]` must be of type `complex`, got .*\n"
-                "  - `sequence\\[2\\] not in \\(2j, 4j\\)` not satisfied, got .*\n"
-                "  - `sequence\\[4\\] not in \\(2j, 4j\\)` not satisfied, got .*\n"
-                "  - `sequence\\[5\\]` must be of type `complex`, got"
+                "^\n  - `s` must be a sequence with elements of type `.*`, got .*\n"
+                "  - `s` must have length `5`, but .*\n"
+                "  - `s\\[0\\]` must be of type `complex`, got .*\n"
+                "  - `s\\[2\\] not in \\(2j, 4j\\)` not satisfied, got .*\n"
+                "  - `s\\[4\\] not in \\(2j, 4j\\)` not satisfied, got .*\n"
+                "  - `s\\[5\\]` must be of type `complex`, got"
             ),
             id="scenario3",
         ),
     ),
 )
-def test_check_sequence_multiple_conditions_not_satisfied(
+def test_check_sequence_with_multiple_conditions(
     sequence,
     type_,
     length,
@@ -535,18 +599,54 @@ def test_check_sequence_multiple_conditions_not_satisfied(
     match,
 ):
     with pytest.raises(_CheckError, match=match):
-        _check_sequence(sequence, type_, length=length, **operators)
+        _check_sequence(sequence, type_, name="s", length=length, **operators)
 
 
 @pytest.mark.parametrize(
     "scalar_or_sequence",
     (
-        pytest.param(0, id="0"),
-        pytest.param((1, 2, 3), id="(1, 2, 3)"),
+        pytest.param(None, id="NoneType"),
+        pytest.param(lambda: 0, id="function"),
     ),
 )
-def test_check_scalar_or_sequence(scalar_or_sequence):
-    assert _check_scalar_or_sequence(scalar_or_sequence, int) == scalar_or_sequence
+def test_check_scalar_or_sequence_arg_invalid(scalar_or_sequence):
+    match = "`scalar_or_sequence` must be of type `.*`, or a sequence"
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar_or_sequence(scalar_or_sequence, int)
+
+
+@pytest.mark.parametrize(
+    ("scalar_or_sequence", "type_"),
+    (
+        pytest.param(False, bool, id="bool"),
+        pytest.param(0, int, id="int"),
+        pytest.param(0.0, float, id="float"),
+        pytest.param((False, True), bool, id="sequence of bool"),
+        pytest.param([1, 2, 3], int, id="sequence of int"),
+        pytest.param([1.0, 2.0, 3.0], float, id="sequence of float"),
+    ),
+)
+def test_check_scalar_or_sequence_type_condition_satisfied(scalar_or_sequence, type_):
+    assert _check_scalar_or_sequence(scalar_or_sequence, type_) == scalar_or_sequence
+
+
+@pytest.mark.parametrize(
+    ("scalar_or_sequence", "type_"),
+    (
+        pytest.param(0, bool, id="bool"),
+        pytest.param(0.0, int, id="int"),
+        pytest.param(0, float, id="float"),
+        pytest.param((0, True), bool, id="sequence of bool"),
+        pytest.param([1.0, 2, 3], int, id="sequence of int"),
+        pytest.param([1, 2.0, 3.0], float, id="sequence of float"),
+    ),
+)
+def test_check_scalar_or_sequence_type_condition_not_satisfied(
+    scalar_or_sequence, type_
+):
+    match = "`scalar_or_sequence` must be of type `.*`, or a sequence"
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar_or_sequence(scalar_or_sequence, type_)
 
 
 @pytest.mark.parametrize(
@@ -564,6 +664,12 @@ def test_check_scalar_or_sequence_type_arg_invalid(type_):
         _check_scalar_or_sequence(0, type_)
     with pytest.raises(TypeError, match=match):
         _check_scalar_or_sequence((1, 2, 3), type_)
+
+
+def test_check_scalar_or_sequence_name_arg_valid():
+    match = "`a_string` must be of type `.*`, or a sequence"
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar_or_sequence((1, 2, 3), float, name="a_string")
 
 
 @pytest.mark.parametrize(
@@ -584,6 +690,30 @@ def test_check_scalar_or_sequence_name_arg_invalid(name):
 
 
 @pytest.mark.parametrize(
+    ("scalar_or_sequence", "length"),
+    (
+        pytest.param((1, 2), 2, id="(1, 2) with length=3"),
+        pytest.param((1, 2), None, id="(1, 2) with length=None"),
+        pytest.param((1, 2, 3), 3, id="(1, 2, 3) with length=4"),
+        pytest.param((1, 2, 3), None, id="(1, 2, 3) with length=None"),
+    ),
+)
+def test_scalar_or_sequence_length_condition_satisfied(scalar_or_sequence, length):
+    scalar_or_sequence_ = _check_scalar_or_sequence(
+        scalar_or_sequence=scalar_or_sequence,
+        type_=int,
+        length=length,
+    )
+    assert scalar_or_sequence_ == scalar_or_sequence
+
+
+def test_scalar_or_sequence_length_condition_not_satisfied():
+    match = "`sos` must have length `4`, but `len\\(sos\\) = 3`"
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar_or_sequence((1, 2, 3), int, name="sos", length=4)
+
+
+@pytest.mark.parametrize(
     "length",
     (
         pytest.param(0, id="0"),
@@ -598,10 +728,90 @@ def test_check_scalar_or_sequence_length_arg_invalid(length):
         _check_scalar_or_sequence((1, 2, 3), int, length=length)
 
 
-def test_check_scalar_or_sequence_unsupported_operators_keywords():
+def test_check_scalar_or_sequence_operator_unsupported():
     match = "^unsupported operator keyword\\(s\\) `foo`, `bar`"
     operators = OrderedDict([("foo", 0), ("ge", 1), ("bar", 2), ("lt", 3)])
+
     with pytest.raises(TypeError, match=match):
         _check_scalar_or_sequence(0, int, **operators)
+
     with pytest.raises(TypeError, match=match):
         _check_scalar_or_sequence((1, 2, 3), int, **operators)
+
+
+@pytest.mark.parametrize(
+    ("scalar_or_sequence", "type_", "length", "operators", "match"),
+    (
+        pytest.param(
+            (False, True, 2, 3.0),
+            bool,
+            4,
+            {"le": True},
+            (
+                "^\n  - `sos` must be of type `.*`, or a sequence with "
+                "elements of type `.*`, got .*\n"
+                "  - `sos\\[2\\]` must be of type `bool`, got .*\n"
+                "  - `sos\\[2\\] <= True` not satisfied, got .*\n"
+                "  - `sos\\[3\\]` must be of type `bool`, got .*\n"
+                "  - `sos\\[3] <= True` not satisfied, got"
+            ),
+            id="scenario0",
+        ),
+        pytest.param(
+            (False, 1, 2, 3.0),
+            int,
+            4,
+            {"ge": 1},
+            (
+                "^\n  - `sos` must be of type `.*`, or a sequence with "
+                "elements of type `.*`, got .*\n"
+                "  - `sos\\[0\\] >= 1` not satisfied, got .*\n"
+                "  - `sos\\[3\\]` must be of type `int`, got"
+            ),
+            id="scenario1",
+        ),
+        pytest.param(
+            (0.0, True, 2.0, 3.0),
+            float,
+            5,
+            {"gt": 0.0, "lt": 3.0},
+            (
+                "^\n  - `sos` must be of type `.*`, or a sequence with "
+                "elements of type `.*`, got .*\n"
+                "  - `sos` must have length `5`, but .*\n"
+                "  - `sos\\[0\\] > 0.0` not satisfied, got .*\n"
+                "  - `sos\\[1\\]` must be of type `float`, got .*\n"
+                "  - `sos\\[3\\] < 3.0` not satisfied"
+            ),
+            id="scenario2",
+        ),
+        pytest.param(
+            0,
+            float,
+            None,
+            {"gt": 1.0, "in_": (1, 2, 3)},
+            (
+                "^\n  - `sos` must be of type `.*`, or a sequence with "
+                "elements of type `.*`, got .*\n"
+                "  - `sos > 1.0` not satisfied, got .*\n"
+                "  - `sos in \\(1, 2, 3\\)` not satisfied, got"
+            ),
+            id="scenario3",
+        ),
+    ),
+)
+def test_check_scalar_or_sequence_with_multiple_conditions(
+    scalar_or_sequence,
+    type_,
+    length,
+    operators,
+    match,
+):
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar_or_sequence(
+            scalar_or_sequence,
+            type_,
+            name="sos",
+            length=length,
+            **operators,
+        )

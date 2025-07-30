@@ -33,38 +33,31 @@ def _check_scalar(
     name: str = "scalar",
     **operators: Any,
 ) -> Any:
-    type_ = __check_type(type_)
-    name = __check_name(name)
-    operators = __check_operators(operators)
+    type_ = __check_type_arg(type_)
+    name = __check_name_arg(name)
+    operators = __check_operators_arg(operators)
 
     check_error_message = ""
 
-    # -----------
-    # Type check
-    # -----------
+    # ---------------------
+    # Check type condition
+    # ---------------------
     type_condition_not_satisfied = not isinstance(scalar, type_)
-
     if type_condition_not_satisfied:
-        if isinstance(type_, tuple):
-            type_str = ", ".join(f"`{t.__qualname__}`" for t in type_[:-1])
-            type_str = f"{type_str} or `{type_[-1].__qualname__}`"
-        elif isinstance(type_, UnionType):
-            type_str = f"`{type_}`"
-        else:
-            type_str = f"`{type_.__qualname__}`"
-
+        type_str = __get_type_str(type_)
         check_error_message = (
             f"{check_error_message}\n"
-            f"  - `{name}` must be of type {type_str}, got "
-            f"`{scalar}` of type `{type(scalar).__qualname__}`"
+            f"  - `{name}` must be of type {type_str}, got `{scalar}` of "
+            f"type `{type(scalar).__qualname__}`"
         )
 
-    # ----------------
-    # Operator checks
-    # ----------------
+    # --------------------------
+    # Check operator conditions
+    # --------------------------
     for op_key, op_arg in operators.items():
         op_symbol = __SUPPORTED_OPERATORS[op_key]
 
+        # Get operator
         if op_key == "in_":
             op = lambda a, b: operator.contains(b, a)  # noqa: E731
         elif op_key == "not_in":
@@ -76,30 +69,31 @@ def _check_scalar(
             op_condition_not_satisfied = not op(scalar, op_arg)
         except TypeError as e:
             if type_condition_not_satisfied:
-                # We assume that this is a consequential error and that passing
-                # a scalar of the correct type will fix this
+                # We assume that this is a consequential error
+                # Passing a scalar of the correct type should fix this
                 continue
             else:
                 # We are using _check_scalar incorrectly
+                # It is a bug if using our public API leads to this error
 
-                # Known incorrect uses
+                # Known incorrect use :/
                 if op_key in ("ge", "gt", "le", "lt"):
-                    p = "^'.*' not supported between instances of '.*' and '.*'$"
-                    if re.match(p, str(e)):
+                    pattern = "^'.*' not supported between instances of '.*' and '.*'$"
+                    if re.match(pattern, str(e)):
                         raise TypeError(
                             f"`{op_symbol}` (`{op_key}`) not supported between "
                             f"instances of `{type(scalar).__qualname__}` and "
                             f"`{type(op_arg).__qualname__}`{_BUG_MESSAGE}"
                         )
                 elif op_key in ("in_", "not_in"):
-                    p = "^argument of type .* is not iterable$"
-                    if re.match(p, str(e)):
+                    pattern = "^argument of type '.*' is not iterable$"
+                    if re.match(pattern, str(e)):
                         raise TypeError(
                             f"`{op_key}` must be iterable, got `{op_arg}`"
-                            f"{_BUG_MESSAGE}`"
+                            f"{_BUG_MESSAGE}"
                         )
 
-                # Unknown incorrect uses
+                # Unknown incorrect use :(
                 raise TypeError(f"{e}{_BUG_MESSAGE}")  # pragma: no cover
 
         if op_condition_not_satisfied:
@@ -121,25 +115,78 @@ def _check_sequence(
     length: int | None = None,
     **operators: Any,
 ) -> Sequence[Any]:
-    type_ = __check_type(type_)
-    name = __check_name(name)
-    length = __check_length(length)
-    operators = __check_operators(operators)
-
-    if not isinstance(sequence, Sequence):
-        raise _CheckError(f"`{name}` must be a sequence, got `{sequence}`")
+    type_ = __check_type_arg(type_)
+    name = __check_name_arg(name)
+    length = __check_length_arg(length)
+    operators = __check_operators_arg(operators)
 
     check_error_message = ""
 
-    if length is not None and len(sequence) != length:
+    # ---------------------
+    # Check type condition
+    # ---------------------
+    type_condition_not_satisfied = not (
+        isinstance(sequence, Sequence)
+        and all(isinstance(element, type_) for element in sequence)
+    )
+    if type_condition_not_satisfied:
+        type_str = __get_type_str(type_)
         check_error_message = (
-            f"{check_error_message}\n  - `{name}` must have length `{length}`, "
-            f"but `len({name}) = {len(sequence)}`"
+            f"{check_error_message}\n"
+            f"  - `{name}` must be a sequence with elements of type "
+            f"{type_str}, got `{sequence}`"
         )
 
+    if isinstance(sequence, Sequence):
+        # ---------------------------------------------
+        # Check length condition / operator conditions
+        # ---------------------------------------------
+        try:
+            __check_sequence_length_and_elements(
+                sequence=sequence,
+                type_=type_,
+                name=name,
+                length=length,
+                **operators,
+            )
+        except _CheckError as e:
+            check_error_message = f"{check_error_message}{e}"
+
+    if len(check_error_message) > 0:
+        raise _CheckError(check_error_message)
+
+    return sequence
+
+
+def __check_sequence_length_and_elements(
+    sequence: Sequence[Any],
+    type_: __TYPE_TYPE,
+    name: str = "sequence",
+    length: int | None = None,
+    **operators: Any,
+) -> Sequence[Any]:
+    check_error_message = ""
+
+    # -----------------------
+    # Check length condition
+    # -----------------------
+    if length is not None and len(sequence) != length:
+        check_error_message = (
+            f"{check_error_message}\n  - `{name}` must have length "
+            f"`{length}`, but `len({name}) = {len(sequence)}`"
+        )
+
+    # --------------------------
+    # Check operator conditions
+    # --------------------------
     for index, scalar in enumerate(sequence):
         try:
-            _check_scalar(scalar, type_, f"{name}[{index}]", **operators)
+            _check_scalar(
+                scalar=scalar,
+                type_=type_,
+                name=f"{name}[{index}]",  # Clearly indicate element-level check
+                **operators,
+            )
         except _CheckError as e:
             check_error_message = f"{check_error_message}{e}"
 
@@ -156,20 +203,68 @@ def _check_scalar_or_sequence(
     length: int | None = None,
     **operators: Any,
 ) -> Any | Sequence[Any]:
-    type_ = __check_type(type_)
-    name = __check_name(name)
-    length = __check_length(length)
-    operators = __check_operators(operators)
+    type_ = __check_type_arg(type_)
+    name = __check_name_arg(name)
+    length = __check_length_arg(length)
+    operators = __check_operators_arg(operators)
+
+    check_error_message = ""
+
+    # ---------------------
+    # Check type condition
+    # ---------------------
+    type_condition_not_satisfied = not (
+        isinstance(scalar_or_sequence, type_)
+        or isinstance(scalar_or_sequence, Sequence)
+        and all(isinstance(element, type_) for element in scalar_or_sequence)
+    )
+    if type_condition_not_satisfied:
+        type_str = __get_type_str(type_)
+        check_error_message = (
+            f"{check_error_message}\n"
+            f"  - `{name}` must be of type {type_str}, or a sequence with "
+            f"elements of type {type_str}, got `{scalar_or_sequence}`"
+        )
 
     if isinstance(scalar_or_sequence, Sequence):
-        _check_sequence(scalar_or_sequence, type_, name, length, **operators)
+        # ---------------------------------------------
+        # Check length condition / operator conditions
+        # ---------------------------------------------
+        try:
+            # We don't want to check the type again
+            # So instead of _check_sequence, we call its helper function
+            __check_sequence_length_and_elements(
+                sequence=scalar_or_sequence,
+                type_=type_,
+                name=name,
+                length=length,
+                **operators,
+            )
+        except _CheckError as e:
+            check_error_message = f"{check_error_message}{e}"
     else:
-        _check_scalar(scalar_or_sequence, type_, name, **operators)
+        # -------------
+        # Check scalar
+        # -------------
+        try:
+            # We don't want to check the type again
+            # So instead of the desired type, we pass the actual type
+            _check_scalar(
+                scalar=scalar_or_sequence,
+                type_=type(scalar_or_sequence),
+                name=name,
+                **operators,
+            )
+        except _CheckError as e:
+            check_error_message = f"{check_error_message}{e}"
+
+    if len(check_error_message) > 0:
+        raise _CheckError(check_error_message)
 
     return scalar_or_sequence
 
 
-def __check_type(type_: __TYPE_TYPE) -> __TYPE_TYPE:
+def __check_type_arg(type_: __TYPE_TYPE) -> __TYPE_TYPE:
     try:
         isinstance(object(), type_)
     except TypeError:
@@ -180,14 +275,14 @@ def __check_type(type_: __TYPE_TYPE) -> __TYPE_TYPE:
     return type_
 
 
-def __check_name(name: str) -> str:
+def __check_name_arg(name: str) -> str:
     if not isinstance(name, str):
         raise TypeError(f"`name` must be a `str`, got `{name}`")
 
     return name
 
 
-def __check_length(length: int | None) -> int | None:
+def __check_length_arg(length: int | None) -> int | None:
     if not ((isinstance(length, int) and length > 0) or length is None):
         raise TypeError(f"`length` must be a positive `int` or `None`, got `{length}`")
 
@@ -206,7 +301,7 @@ __SUPPORTED_OPERATORS = {
 }
 
 
-def __check_operators(operators: dict[str, Any]) -> dict[str, Any]:
+def __check_operators_arg(operators: dict[str, Any]) -> dict[str, Any]:
     unsupported_operators = []
     for op_key in operators.keys():
         if op_key not in __SUPPORTED_OPERATORS.keys():
@@ -221,3 +316,15 @@ def __check_operators(operators: dict[str, Any]) -> dict[str, Any]:
         )
 
     return operators
+
+
+def __get_type_str(type_: __TYPE_TYPE) -> str:
+    if isinstance(type_, tuple):
+        type_str = ", ".join(f"`{t.__qualname__}`" for t in type_[:-1])
+        type_str = f"{type_str} or `{type_[-1].__qualname__}`"
+    elif isinstance(type_, UnionType):
+        type_str = f"`{type_}`"
+    else:
+        type_str = f"`{type_.__qualname__}`"
+
+    return type_str

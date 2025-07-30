@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-_BUG_MESSAGE = (
+__BUG_MESSAGE_ENABLED: bool = True
+_BUG_MESSAGE: str = __BUG_MESSAGE_ENABLED * (
     "\n\n"
     "* * * * * * * * * * * * * * * * * * * *\n"
     "*            this is a bug            *\n"
