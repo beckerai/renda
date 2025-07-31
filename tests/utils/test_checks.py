@@ -19,8 +19,8 @@ from renda._checks import (
     _check_scalar,
     _check_scalar_or_sequence,
     _check_sequence,
-    _CheckError,
 )
+from renda._exceptions import _CheckError
 
 
 @pytest.mark.parametrize(

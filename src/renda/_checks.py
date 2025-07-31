@@ -16,15 +16,12 @@ import re
 from types import UnionType
 from typing import Any, Sequence
 
+from renda._exceptions import _CheckError
 from renda._messages import _BUG_MESSAGE
 
 
 # The second argument of `isinstance()` must be of this type
 __TYPE_TYPE = type | UnionType | tuple[Any, ...]
-
-
-class _CheckError(Exception):
-    pass
 
 
 def _check_scalar(
