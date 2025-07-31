@@ -16,7 +16,7 @@ import re
 from types import UnionType
 from typing import Any, Sequence
 
-from renda.utils._messages import _BUG_MESSAGE
+from renda._messages import _BUG_MESSAGE
 
 
 # The second argument of `isinstance()` must be of this type

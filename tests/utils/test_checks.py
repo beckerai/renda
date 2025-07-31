@@ -15,7 +15,7 @@ from collections import OrderedDict
 
 import pytest
 
-from renda.utils._checks import (
+from renda._checks import (
     _check_scalar,
     _check_scalar_or_sequence,
     _check_sequence,
