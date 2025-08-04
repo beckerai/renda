@@ -18,6 +18,18 @@ from typing import Any, Sequence
 
 from renda._exceptions import _CheckError
 from renda._messages import _BUG_MESSAGE
+from renda.random import MAX_SEED, MIN_SEED
+
+
+def _check_seed(seed: int) -> int:
+    return _check_scalar(
+        scalar=seed,
+        type_=int,
+        allow_none=True,
+        name="seed",
+        ge=MIN_SEED,
+        le=MAX_SEED,
+    )
 
 
 # The second argument of `isinstance()` must be of this type
