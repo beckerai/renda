@@ -17,6 +17,7 @@ from torch.utils.data import Dataset
 
 from renda._exceptions import _CheckError
 from renda.data.galaxy import GalaxyDataset
+from renda.random import MAX_SEED, MIN_SEED
 
 
 def test_galaxy_dataset():
@@ -161,3 +162,39 @@ def test_galaxy_dataset_entwinement_arg_valid(entwinement):
 def test_galaxy_dataset_entwinement_arg_invalid(entwinement):
     with pytest.raises(_CheckError):
         GalaxyDataset(entwinement=entwinement)
+
+
+def test_galaxy_dataset_seed_arg_same_seeds():
+    Xa, Ya = GalaxyDataset(seed=0)[:]
+    Xb, Yb = GalaxyDataset(seed=0)[:]
+    assert torch.all(torch.eq(Xa, Xb))
+    assert torch.all(torch.eq(Ya, Yb))
+
+
+def test_galaxy_dataset_seed_arg_different_seeds():
+    Xa, Ya = GalaxyDataset(seed=0)[:]
+    Xb, Yb = GalaxyDataset(seed=1)[:]
+    assert not torch.all(torch.eq(Xa, Xb))
+    assert torch.all(torch.eq(Ya, Yb))
+
+
+def test_galaxy_dataset_seed_arg_none_as_seed():
+    Xa, Ya = GalaxyDataset(seed=None)[:]
+    Xb, Yb = GalaxyDataset(seed=None)[:]
+    assert not torch.all(torch.eq(Xa, Xb))
+    assert torch.all(torch.eq(Ya, Yb))
+
+
+@pytest.mark.parametrize(
+    "seed",
+    (
+        pytest.param(0.0, id="0.0"),
+        pytest.param("zero", id="zero"),
+        pytest.param(MIN_SEED - 1, id="MIN_SEED - 1"),
+        pytest.param(MAX_SEED + 1, id="MAX_SEED + 1"),
+        pytest.param(lambda: 0, id="lambda: 0"),
+    ),
+)
+def test_galaxy_dataset_seed_arg_invalid(seed):
+    with pytest.raises(_CheckError):
+        GalaxyDataset(seed=seed)
