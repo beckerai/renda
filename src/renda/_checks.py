@@ -18,10 +18,11 @@ from typing import Any, Sequence
 
 from renda._exceptions import _CheckError
 from renda._messages import _BUG_MESSAGE
-from renda.random import MAX_SEED, MIN_SEED
 
 
-def _check_seed(seed: int) -> int:
+def _check_seed(seed: int | None) -> int | None:
+    from renda.random import MAX_SEED, MIN_SEED
+
     return _check_scalar(
         scalar=seed,
         type_=int,
