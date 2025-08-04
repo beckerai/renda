@@ -17,111 +17,49 @@ import numpy as np
 import pytest
 import torch
 
-from renda.random import MAX_SEED, MIN_SEED, check_seed, ensure_seed, is_seed, temp_seed
+from renda._checks import _check_seed
+from renda._exceptions import _CheckError
+from renda.random import MAX_SEED, MIN_SEED, _int_to_seed, temp_seed
 
 
 @pytest.mark.parametrize(
-    ("value", "result"),
+    ("int_", "seed_expected"),
     (
         # Seeds
-        pytest.param(42, True, id="42"),
-        pytest.param(MIN_SEED, True, id="MIN_SEED"),
-        pytest.param(MAX_SEED, True, id="MAX_SEED"),
-        pytest.param(False, True, id="False"),
-        pytest.param(True, True, id="True"),
-        # Non-seeds
-        pytest.param(4.2, False, id="4.2"),
-        pytest.param("forty-two", False, id="forty-two"),
-        pytest.param(MIN_SEED - 1, False, id="MIN_SEED_minus_1"),
-        pytest.param(MAX_SEED + 1, False, id="MAX_SEED_plus_1"),
-        pytest.param(None, False, id="None"),
-    ),
-)
-def test_is_seed(value, result):
-    assert is_seed(value) is result
-
-
-@pytest.mark.parametrize(
-    ("value", "value_expected"),
-    (
-        # Seeds
-        pytest.param(42, 42, id="42"),
+        pytest.param(1, 1, id="1"),
         pytest.param(MIN_SEED, MIN_SEED, id="MIN_SEED"),
         pytest.param(MAX_SEED, MAX_SEED, id="MAX_SEED"),
-        # Boolean seeds only change in type (bool -> int)
+        # Boolean seeds change in type (bool -> int)
         pytest.param(False, 0, id="False"),
         pytest.param(True, 1, id="True"),
         # Non-seeds of type int are mapped onto seeds
-        pytest.param(MIN_SEED - 1, MAX_SEED, id="MIN_SEED_minus_1"),
-        pytest.param(MAX_SEED + 1, MIN_SEED, id="MAX_SEED_plus_1"),
-        pytest.param(MIN_SEED - 42, MAX_SEED - 41, id="MIN_SEED_minus_42"),
-        pytest.param(MAX_SEED + 42, MIN_SEED + 41, id="MAX_SEED_plus_42"),
+        pytest.param(MIN_SEED - 1, MAX_SEED, id="MIN_SEED - 1"),
+        pytest.param(MAX_SEED + 1, MIN_SEED, id="MAX_SEED + 1"),
+        pytest.param(MIN_SEED - 2, MAX_SEED - 1, id="MIN_SEED - 2"),
+        pytest.param(MAX_SEED + 2, MIN_SEED + 1, id="MAX_SEED + 2"),
+        pytest.param(MIN_SEED - 10, MAX_SEED - 9, id="MIN_SEED_- 10"),
+        pytest.param(MAX_SEED + 10, MIN_SEED + 9, id="MAX_SEED + 10"),
     ),
 )
-def test_ensure_seed(value, value_expected):
-    value_suggested = ensure_seed(value)
-    assert is_seed(value_suggested)
-    assert value_suggested == value_expected
+def test_int_to_seed_int_arg_valid(int_, seed_expected):
+    seed_suggested = _int_to_seed(int_)
+    assert _check_seed(seed_suggested) == seed_suggested
+    assert seed_suggested == seed_expected
 
 
 @pytest.mark.parametrize(
-    "value",
+    "int_",
     (
-        pytest.param(4.2, id="float"),
-        pytest.param("forty-two", id="str"),
-        pytest.param(None, id="NoneType"),
-        pytest.param(lambda: 0, id="function"),
-    ),
-)
-def test_ensure_seed_for_invalid_value(value):
-    with pytest.raises(TypeError):
-        ensure_seed(value)
-
-
-@pytest.mark.parametrize(
-    "value",
-    (
-        pytest.param(42, id="42"),
-        pytest.param(MIN_SEED, id="MIN_SEED"),
-        pytest.param(MAX_SEED, id="MAX_SEED"),
-        pytest.param(False, id="False"),
-        pytest.param(True, id="True"),
-        # This works for allow_none=True
+        pytest.param(0.0, id="0.0"),
+        pytest.param("zero", id="zero"),
         pytest.param(None, id="None"),
+        pytest.param(lambda: 0, id="lambda: 0"),
     ),
 )
-def test_check_seed(value):
-    assert check_seed(value, allow_none=True) == value
-
-
-@pytest.mark.parametrize(
-    "value",
-    (
-        pytest.param(4.2, id="4.2"),
-        pytest.param("forty-two", id="forty-two"),
-        pytest.param(MIN_SEED - 1, id="MIN_SEED_minus_1"),
-        pytest.param(MAX_SEED + 1, id="MAX_SEED_plus_1"),
-        # This DOES NOT work because allow_none=False by default
-        pytest.param(None, id="None"),
-    ),
-)
-def test_check_seed_for_invalid_value(value):
-    with pytest.raises(ValueError):
-        check_seed(value)
-
-
-@pytest.mark.parametrize(
-    "allow_none",
-    (
-        pytest.param(4.2, id="float"),
-        pytest.param("forty-two", id="str"),
-        pytest.param(None, id="NoneType"),
-        pytest.param(lambda: 0, id="function"),
-    ),
-)
-def test_check_seed_for_invalid_allow_none(allow_none):
-    with pytest.raises(TypeError):
-        check_seed(42, allow_none=allow_none)
+def test_int_to_seed_int_arg_invalid(int_):
+    match = "`int_` must be of type `int`, got `.*`"
+    with pytest.raises(TypeError, match=match):
+        _int_to_seed(int_)
 
 
 @pytest.mark.parametrize(
@@ -239,3 +177,18 @@ class TestTempSeed:
         b = get_10_random_numbers()
 
         assert all_equal(a, b)
+
+
+@pytest.mark.parametrize(
+    "seed",
+    (
+        pytest.param(0.0, id="0.0"),
+        pytest.param(MIN_SEED - 1, id="MIN_SEED - 1"),
+        pytest.param(MAX_SEED + 1, id="MAX_SEED + 1"),
+        pytest.param("zero", id="zero"),
+        pytest.param(lambda: 0, id="lambda: 0"),
+    ),
+)
+def test_temp_seed_seed_arg_invalid(seed):
+    with pytest.raises(_CheckError):
+        temp_seed(seed)
