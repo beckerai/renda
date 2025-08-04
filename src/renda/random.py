@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import random
-from typing import Optional
+from typing import Any, Iterable
 
 import numpy as np
 import torch
@@ -34,13 +34,13 @@ def _int_to_seed(int_: int) -> int:
 
 
 class temp_seed:
-    def __init__(self, seed: Optional[int]) -> None:
-        self._seed = _check_seed(seed)
+    _random_state: tuple[Any, ...]
+    _np_random_state: dict[str, Any]
+    _torch_rng_state: torch.Tensor
+    _torch_cuda_rng_state_all: Iterable[torch.Tensor]
 
-        self._random_state = None
-        self._np_random_state = None
-        self._torch_rng_state = None
-        self._torch_cuda_rng_state_all = None
+    def __init__(self, seed: int | None) -> None:
+        self._seed = _check_seed(seed)
 
     def __enter__(self) -> None:  # pragma: no cover
         if self._seed is not None:
