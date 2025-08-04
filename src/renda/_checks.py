@@ -18,6 +18,18 @@ from typing import Any, Sequence
 
 from renda._exceptions import _CheckError
 from renda._messages import _BUG_MESSAGE
+from renda.random import MAX_SEED, MIN_SEED
+
+
+def _check_seed(seed: int) -> int:
+    return _check_scalar(
+        scalar=seed,
+        type_=int,
+        allow_none=True,
+        name="seed",
+        ge=MIN_SEED,
+        le=MAX_SEED,
+    )
 
 
 # The second argument of `isinstance()` must be of this type
@@ -27,12 +39,17 @@ __TYPE_TYPE = type | UnionType | tuple[Any, ...]
 def _check_scalar(
     scalar: Any,
     type_: __TYPE_TYPE,
+    allow_none: bool = False,
     name: str = "scalar",
     **operators: Any,
 ) -> Any:
     type_ = __check_type_arg(type_)
+    allow_none = __check_allow_none_arg(allow_none)
     name = __check_name_arg(name)
     operators = __check_operators_arg(operators)
+
+    if allow_none and scalar is None:
+        return scalar
 
     check_error_message = ""
 
@@ -44,8 +61,9 @@ def _check_scalar(
         type_str = __get_type_str(type_)
         check_error_message = (
             f"{check_error_message}\n"
-            f"  - `{name}` must be of type {type_str}, got `{scalar}` of "
-            f"type `{type(scalar).__qualname__}`"
+            f"  - `{name}` must be of type {type_str}, "
+            f"{allow_none * 'or `None`, '}"
+            f"got `{scalar}` of type `{type(scalar).__qualname__}`"
         )
 
     # --------------------------
@@ -270,6 +288,13 @@ def __check_type_arg(type_: __TYPE_TYPE) -> __TYPE_TYPE:
         )
 
     return type_
+
+
+def __check_allow_none_arg(allow_none: bool) -> bool:
+    if not isinstance(allow_none, bool):
+        raise TypeError(f"`allow_none` must be of type `bool`, got `{allow_none}`")
+
+    return allow_none
 
 
 def __check_name_arg(name: str) -> str:

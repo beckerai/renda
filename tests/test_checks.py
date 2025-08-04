@@ -18,9 +18,41 @@ import pytest
 from renda._checks import (
     _check_scalar,
     _check_scalar_or_sequence,
+    _check_seed,
     _check_sequence,
 )
 from renda._exceptions import _CheckError
+from renda.random import MAX_SEED, MIN_SEED
+
+
+@pytest.mark.parametrize(
+    "seed",
+    (
+        pytest.param(1, id="1"),
+        pytest.param(MIN_SEED, id="MIN_SEED"),
+        pytest.param(MAX_SEED, id="MAX_SEED"),
+        pytest.param(None, id="None"),
+        pytest.param(False, id="False"),
+        pytest.param(True, id="True"),
+    ),
+)
+def test_check_seed_satisfied(seed):
+    assert _check_seed(seed) == seed
+
+
+@pytest.mark.parametrize(
+    "value",
+    (
+        pytest.param(0.0, id="0.0"),
+        pytest.param(MIN_SEED - 1, id="MIN_SEED - 1"),
+        pytest.param(MAX_SEED + 1, id="MAX_SEED + 1"),
+        pytest.param("zero", id="zero"),
+        pytest.param(lambda: 0, id="lambda: 0"),
+    ),
+)
+def test_check_seed_not_satisfied(value):
+    with pytest.raises(_CheckError):
+        _check_seed(value)
 
 
 @pytest.mark.parametrize(
@@ -47,6 +79,38 @@ def test_check_scalar_type_condition_not_satisfied(scalar, type_):
     match = "`scalar` must be of type `.*`, got `.*` of type `.*`"
     with pytest.raises(_CheckError, match=match):
         _check_scalar(scalar, type_)
+
+
+def test_check_scalar_allow_none_satisfied():
+    assert _check_scalar(None, int, allow_none=True) is None
+
+
+def test_check_scalar_allow_none_not_satisfied():
+    match = "`scalar` must be of type `.*`, or `None`, got `.*` of type `.*`"
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar(0.0, int, allow_none=True)
+
+
+def test_check_scalar_allow_none_arg_false():
+    match = "`scalar` must be of type `.*`, got `.*` of type `.*`"
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar(None, int, allow_none=False)
+
+
+@pytest.mark.parametrize(
+    "allow_none",
+    (
+        pytest.param(0, id="0"),
+        pytest.param(0.0, id="0.0"),
+        pytest.param("zero", id="zero"),
+        pytest.param(None, id="None"),
+        pytest.param(lambda: 0, id="lambda: 0"),
+    ),
+)
+def test_check_scalar_allow_none_arg_invalid(allow_none):
+    match = "^`allow_none` must be of type `bool`, got `.*`$"
+    with pytest.raises(TypeError, match=match):
+        _check_scalar(0, int, allow_none=allow_none)
 
 
 @pytest.mark.parametrize(
