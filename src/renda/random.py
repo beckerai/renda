@@ -12,50 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import random
-from typing import Any, Optional
+from typing import Any, Iterable
 
 import numpy as np
 import torch
+
+from renda._checks import _check_seed
 
 
 MIN_SEED = 0
 MAX_SEED = 4294967295  # 2^32 - 1 (uint32)
 
 
-def is_seed(value: Any) -> bool:
-    return isinstance(value, int) and MIN_SEED <= value <= MAX_SEED
+def _int_to_seed(int_: int) -> int:
+    if not isinstance(int_, int):
+        raise TypeError(f"`int_` must be of type `int`, got `{int_}`")
 
-
-def ensure_seed(value: int) -> int:
-    if isinstance(value, int):
-        # This only works because MIN_SEED = 0 and MIN_SEED > 0
-        # A more general solutions would be nice
-        return value % (MAX_SEED + 1)
-    else:
-        raise TypeError("`value` must be of type `int`")
-
-
-def check_seed(value: Any, allow_none: bool = False) -> Any:
-    if not isinstance(allow_none, bool):
-        raise TypeError("`allow_none` must be of type `bool`")
-
-    if is_seed(value) or (value is None and allow_none):
-        return value
-    else:
-        raise ValueError(
-            f"`seed` must be an `int` between `MIN_SEED = {MIN_SEED}` and "
-            f"`MAX_SEED = {MAX_SEED}`" + allow_none * " or None"
-        )
+    # This only works because MIN_SEED = 0 and MAX_SEED > 0
+    # A more general solutions would be nice
+    return int_ % (MAX_SEED + 1)
 
 
 class temp_seed:
-    def __init__(self, seed: Optional[int]) -> None:
-        self._seed = check_seed(seed, allow_none=True)
+    _random_state: tuple[Any, ...]
+    _np_random_state: dict[str, Any]
+    _torch_rng_state: torch.Tensor
+    _torch_cuda_rng_state_all: Iterable[torch.Tensor]
 
-        self._random_state = None
-        self._np_random_state = None
-        self._torch_rng_state = None
-        self._torch_cuda_rng_state_all = None
+    def __init__(self, seed: int | None) -> None:
+        self._seed = _check_seed(seed)
 
     def __enter__(self) -> None:  # pragma: no cover
         if self._seed is not None:
