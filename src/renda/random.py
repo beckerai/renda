@@ -24,13 +24,13 @@ MIN_SEED = 0
 MAX_SEED = 4294967295  # 2^32 - 1 (uint32)
 
 
-def ensure_seed(value: int) -> int:
-    if isinstance(value, int):
-        # This only works because MIN_SEED = 0 and MIN_SEED > 0
-        # A more general solutions would be nice
-        return value % (MAX_SEED + 1)
-    else:
-        raise TypeError("`value` must be of type `int`")
+def _int_to_seed(int_: int) -> int:
+    if not isinstance(int_, int):
+        raise TypeError(f"`int_` must be of type `int`, got `{int_}`")
+
+    # This only works because MIN_SEED = 0 and MAX_SEED > 0
+    # A more general solutions would be nice
+    return int_ % (MAX_SEED + 1)
 
 
 class temp_seed:
