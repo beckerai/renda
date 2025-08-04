@@ -49,6 +49,38 @@ def test_check_scalar_type_condition_not_satisfied(scalar, type_):
         _check_scalar(scalar, type_)
 
 
+def test_check_scalar_allow_none_satisfied():
+    assert _check_scalar(None, int, allow_none=True) is None
+
+
+def test_check_scalar_allow_none_not_satisfied():
+    match = "`scalar` must be of type `.*`, or `None`, got `.*` of type `.*`"
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar(0.0, int, allow_none=True)
+
+
+def test_check_scalar_allow_none_arg_false():
+    match = "`scalar` must be of type `.*`, got `.*` of type `.*`"
+    with pytest.raises(_CheckError, match=match):
+        _check_scalar(None, int, allow_none=False)
+
+
+@pytest.mark.parametrize(
+    "allow_none",
+    (
+        pytest.param(0, id="0"),
+        pytest.param(0.0, id="0.0"),
+        pytest.param("zero", id="zero"),
+        pytest.param(None, id="None"),
+        pytest.param(lambda: 0, id="lambda: 0"),
+    ),
+)
+def test_check_scalar_allow_none_arg_invalid(allow_none):
+    match = "^`allow_none` must be of type `bool`, got `.*`$"
+    with pytest.raises(TypeError, match=match):
+        _check_scalar(0, int, allow_none=allow_none)
+
+
 @pytest.mark.parametrize(
     "type_",
     (
