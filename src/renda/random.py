@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import random
-from typing import Any, Optional
+from typing import Optional
 
 import numpy as np
 import torch
@@ -22,10 +22,6 @@ from renda._checks import _check_seed
 
 MIN_SEED = 0
 MAX_SEED = 4294967295  # 2^32 - 1 (uint32)
-
-
-def is_seed(value: Any) -> bool:
-    return isinstance(value, int) and MIN_SEED <= value <= MAX_SEED
 
 
 def ensure_seed(value: int) -> int:

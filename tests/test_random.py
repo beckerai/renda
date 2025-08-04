@@ -17,29 +17,9 @@ import numpy as np
 import pytest
 import torch
 
+from renda._checks import _check_seed
 from renda._exceptions import _CheckError
-from renda.random import MAX_SEED, MIN_SEED, ensure_seed, is_seed, temp_seed
-
-
-@pytest.mark.parametrize(
-    ("value", "result"),
-    (
-        # Seeds
-        pytest.param(42, True, id="42"),
-        pytest.param(MIN_SEED, True, id="MIN_SEED"),
-        pytest.param(MAX_SEED, True, id="MAX_SEED"),
-        pytest.param(False, True, id="False"),
-        pytest.param(True, True, id="True"),
-        # Non-seeds
-        pytest.param(4.2, False, id="4.2"),
-        pytest.param("forty-two", False, id="forty-two"),
-        pytest.param(MIN_SEED - 1, False, id="MIN_SEED_minus_1"),
-        pytest.param(MAX_SEED + 1, False, id="MAX_SEED_plus_1"),
-        pytest.param(None, False, id="None"),
-    ),
-)
-def test_is_seed(value, result):
-    assert is_seed(value) is result
+from renda.random import MAX_SEED, MIN_SEED, ensure_seed, temp_seed
 
 
 @pytest.mark.parametrize(
@@ -61,7 +41,7 @@ def test_is_seed(value, result):
 )
 def test_ensure_seed(value, value_expected):
     value_suggested = ensure_seed(value)
-    assert is_seed(value_suggested)
+    assert _check_seed(value_suggested) == value_suggested
     assert value_suggested == value_expected
 
 
