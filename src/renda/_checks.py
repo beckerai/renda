@@ -339,12 +339,14 @@ def __type_includes_none(type_: __TYPE_TYPE) -> bool:
 
 
 def __get_type_str(type_: __TYPE_TYPE) -> str:
-    if isinstance(type_, tuple):
-        type_str = ", ".join(f"`{t.__qualname__}`" for t in type_[:-1])
-        type_str = f"{type_str} or `{type_[-1].__qualname__}`"
-    elif isinstance(type_, UnionType):
-        type_str = f"`{type_}`"
+    type_args = get_args(type_)
+    if len(type_args) == 0:
+        type_args = type_
+
+    if isinstance(type_args, tuple):
+        type_str = ", ".join(f"`{t.__qualname__}`" for t in type_args[:-1])
+        type_str = f"{type_str} or `{type_args[-1].__qualname__}`"
     else:
-        type_str = f"`{type_.__qualname__}`"
+        type_str = f"`{type_args.__qualname__}`"
 
     return type_str
