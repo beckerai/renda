@@ -11,17 +11,92 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
+
+import operator
 import random
 from typing import Any, Iterable
 
 import numpy as np
 import torch
 
-from renda._checks import _check_seed
+from renda._checks import _check_scalar, _check_seed, _CheckError
 
 
 MIN_SEED = 0
 MAX_SEED = 4294967295  # 2^32 - 1 (uint32)
+
+
+class Seed:
+    def __init__(self, value: int | None | Seed) -> None:
+        if isinstance(value, Seed):
+            value = value.value
+
+        self._value = _check_scalar(
+            scalar=value,
+            type_=int | Seed,
+            allow_none=True,
+            name="value",
+            ge=MIN_SEED,
+            le=MAX_SEED,
+        )
+
+    @property
+    def value(self) -> int | None:
+        return self._value
+
+    def __str__(self):
+        return str(self._value)
+
+    def __add__(self, other: int | Seed | None) -> Seed:
+        return self._operator(other, operator.add)
+
+    def __sub__(self, other: int | Seed | None) -> Seed:
+        return self._operator(other, operator.sub)
+
+    def __mul__(self, other: int | Seed | None) -> Seed:
+        return self._operator(other, operator.mul)
+
+    def _operator(self, other, operator_):
+        _check_scalar(
+            scalar=other,
+            type_=int | Seed,
+            allow_none=True,
+            name="other",
+        )
+
+        value = self._value
+        if isinstance(other, Seed):
+            other = other.value
+
+        if value is None or other is None:
+            return Seed(None)
+        else:
+            try:
+                result = operator_(value, other)
+                result %= MAX_SEED + 1
+                result = Seed(result)
+            except (TypeError, _CheckError):
+                raise TypeError()
+            return result
+
+    def __radd__(self, other: int | Seed | None) -> Seed:
+        return self + other
+
+    def __rsub__(self, other: int | Seed | None) -> Seed:
+        return self - other
+
+    def __rmul__(self, other: int | Seed | None) -> Seed:
+        return self * other
+
+    def __iadd__(self, other: int | Seed | None) -> Seed:
+        return self + other
+
+    def __isub__(self, other: int | Seed | None) -> Seed:
+        return self - other
+
+    def __imul__(self, other: int | Seed | None) -> Seed:
+        return self * other
 
 
 def _int_to_seed(int_: int) -> int:

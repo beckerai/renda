@@ -19,7 +19,136 @@ import torch
 
 from renda._checks import _check_seed
 from renda._exceptions import _CheckError
-from renda.random import MAX_SEED, MIN_SEED, _int_to_seed, temp_seed
+from renda.random import MAX_SEED, MIN_SEED, Seed, _int_to_seed, temp_seed
+
+
+@pytest.mark.parametrize(
+    "value",
+    (
+        pytest.param(1, id="1"),
+        pytest.param(MIN_SEED, id="MIN_SEED"),
+        pytest.param(MAX_SEED, id="MAX_SEED"),
+        pytest.param(None, id="None"),
+    ),
+)
+def test_seed_value_arg_valid(value):
+    seed = Seed(value)
+    assert seed.value == value
+
+    value = Seed(value)
+    seed = Seed(value)
+    assert seed.value == value.value
+
+
+@pytest.mark.parametrize(
+    "value",
+    (
+        pytest.param(0.0, id="0.0"),
+        pytest.param("zero", id="zero"),
+        pytest.param(MIN_SEED - 1, id="MIN_SEED - 1"),
+        pytest.param(MAX_SEED + 1, id="MAX_SEED + 1"),
+        pytest.param(lambda: 0, id="lambda: 0"),
+    ),
+)
+def test_seed_value_arg_invalid(value):
+    with pytest.raises(_CheckError):
+        Seed(value)
+
+
+def test_seed_value_immutable():
+    match = "^property 'value' of 'Seed' object has no setter$"
+    seed = Seed(0)
+    with pytest.raises(AttributeError, match=match):
+        seed.value = 1
+
+
+@pytest.mark.parametrize(
+    ("value", "other", "result"),
+    (
+        pytest.param(1, 1, 2, id="1 + 1 = 2"),
+        pytest.param(MAX_SEED, 1, MIN_SEED, id="MAX_SEED + 1 = MIN_SEED"),
+        pytest.param(MAX_SEED, 2, MIN_SEED + 1, id="MAX_SEED + 2 = MIN_SEED + 1"),
+        pytest.param(None, 1, None, id="None + 1 = None"),
+        pytest.param(None, None, None, id="None + None = None"),
+    ),
+)
+class TestSeedAdd:
+    def test_seed_add_int(self, value, other, result):
+        seed = Seed(value)
+        result_ = seed + other
+        assert result_.value == result
+        result_ = other + seed
+        assert result_.value == result
+        seed += other
+        assert seed.value == result
+
+    def test_seed_add_seed(self, value, other, result):
+        seed = Seed(value)
+        other = Seed(other)
+        result_ = seed + other
+        assert result_.value == result
+        result_ = other + seed
+        assert result_.value == result
+        seed += other
+        assert seed.value == result
+
+
+@pytest.mark.parametrize(
+    ("value", "other", "result"),
+    (
+        pytest.param(1, 1, 0, id="1 - 1 = 0"),
+        pytest.param(MIN_SEED, 1, MAX_SEED, id="MIN_SEED - 1 = MAX_SEED"),
+        pytest.param(MIN_SEED, 2, MAX_SEED - 1, id="MIN_SEED - 2 = MAX_SEED - 1"),
+        pytest.param(None, 1, None, id="None - 1 = None"),
+        pytest.param(None, None, None, id="None - None = None"),
+    ),
+)
+class TestSeedSub:
+    def test_seed_sub_int(self, value, other, result):
+        seed = Seed(value)
+        result_ = seed - other
+        assert result_.value == result
+        seed -= other
+        assert seed.value == result
+
+    def test_seed_sub_seed(self, value, other, result):
+        seed = Seed(value)
+        other = Seed(other)
+        result_ = seed - other
+        assert result_.value == result
+        seed -= other
+        assert seed.value == result
+
+
+@pytest.mark.parametrize(
+    ("value", "other", "result"),
+    (
+        pytest.param(2, 2, 4, id="2 * 2 = 4"),
+        pytest.param(MAX_SEED, 2, MAX_SEED - 1, id="MAX_SEED * 2 = MAX_SEED - 1"),
+        pytest.param(MAX_SEED, 3, MAX_SEED - 2, id="MAX_SEED * 3 = MAX_SEED - 2"),
+        pytest.param(None, 1, None, id="None * 1 = None"),
+        pytest.param(None, None, None, id="None * None = None"),
+    ),
+)
+class TestSeedMul:
+    def test_seed_mul_int(self, value, other, result):
+        seed = Seed(value)
+        result_ = seed * other
+        assert result_.value == result
+        result_ = other * seed
+        assert result_.value == result
+        seed *= other
+        assert seed.value == result
+
+    def test_seed_mul_seed(self, value, other, result):
+        seed = Seed(value)
+        other = Seed(other)
+        result_ = seed * other
+        assert result_.value == result
+        result_ = other * seed
+        assert result_.value == result
+        seed *= other
+        assert seed.value == result
 
 
 @pytest.mark.parametrize(
