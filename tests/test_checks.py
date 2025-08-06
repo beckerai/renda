@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from collections import OrderedDict
+from types import NoneType
 
 import pytest
 
@@ -61,6 +62,9 @@ def test_check_seed_not_satisfied(value):
         pytest.param(True, bool, id="bool"),
         pytest.param(1, int, id="int"),
         pytest.param(1.0, float, id="float"),
+        pytest.param(None, NoneType, id="None (NoneType)"),
+        pytest.param(None, (int, NoneType), id="None ((int, NoneType))"),
+        pytest.param(None, int | None, id="None (int | None)"),
     ),
 )
 def test_check_scalar_type_condition_satisfied(scalar, type_):
@@ -73,44 +77,15 @@ def test_check_scalar_type_condition_satisfied(scalar, type_):
         pytest.param(True, float, id="bool vs. float"),
         pytest.param(1, bool | float, id="int vs. bool | float"),
         pytest.param(1.0, (bool, int), id="float vs. (bool, int)"),
+        pytest.param(1.0, NoneType, id="float vs. NoneType"),
+        pytest.param(1.0, (int, NoneType), id="float vs. (int, NoneType)"),
+        pytest.param(1.0, int | None, id="float vs. int | None"),
     ),
 )
 def test_check_scalar_type_condition_not_satisfied(scalar, type_):
     match = "`scalar` must be of type `.*`, got `.*` of type `.*`"
     with pytest.raises(_CheckError, match=match):
         _check_scalar(scalar, type_)
-
-
-def test_check_scalar_allow_none_satisfied():
-    assert _check_scalar(None, int, allow_none=True) is None
-
-
-def test_check_scalar_allow_none_not_satisfied():
-    match = "`scalar` must be of type `.*`, or `None`, got `.*` of type `.*`"
-    with pytest.raises(_CheckError, match=match):
-        _check_scalar(0.0, int, allow_none=True)
-
-
-def test_check_scalar_allow_none_arg_false():
-    match = "`scalar` must be of type `.*`, got `.*` of type `.*`"
-    with pytest.raises(_CheckError, match=match):
-        _check_scalar(None, int, allow_none=False)
-
-
-@pytest.mark.parametrize(
-    "allow_none",
-    (
-        pytest.param(0, id="0"),
-        pytest.param(0.0, id="0.0"),
-        pytest.param("zero", id="zero"),
-        pytest.param(None, id="None"),
-        pytest.param(lambda: 0, id="lambda: 0"),
-    ),
-)
-def test_check_scalar_allow_none_arg_invalid(allow_none):
-    match = "^`allow_none` must be of type `bool`, got `.*`$"
-    with pytest.raises(TypeError, match=match):
-        _check_scalar(0, int, allow_none=allow_none)
 
 
 @pytest.mark.parametrize(
@@ -497,6 +472,9 @@ def test_check_sequence_sequence_arg_invalid(sequence):
         pytest.param((False, True), bool, id="bool"),
         pytest.param([1, 2, 3], int, id="int"),
         pytest.param([1.0, 2.0, 3.0], float, id="float"),
+        pytest.param([None, None], NoneType, id="None (NoneType)"),
+        pytest.param([None, 1], (int, NoneType), id="None (int, NoneType)"),
+        pytest.param([None, 1], int | None, id="None (int | None)"),
     ),
 )
 def test_check_sequence_type_condition_satisfied(sequence, type_):
@@ -506,9 +484,12 @@ def test_check_sequence_type_condition_satisfied(sequence, type_):
 @pytest.mark.parametrize(
     ("sequence", "type_"),
     (
-        pytest.param((0, True), bool, id="bool"),
-        pytest.param([1.0, 2, 3], int, id="int"),
-        pytest.param([1, 2.0, 3.0], float, id="float"),
+        pytest.param((0, True), bool, id="int vs. bool"),
+        pytest.param([1.0, 2, 3], int, id="float vs. int"),
+        pytest.param([1, 2.0, 3.0], float, id="int vs. float"),
+        pytest.param([1.0, 2.0], NoneType, id="float vs. NoneType"),
+        pytest.param([1.0, 2.0], (int, NoneType), id="float vs. (int, NoneType)"),
+        pytest.param([1.0, 2.0], int | None, id="float vs. int | None"),
     ),
 )
 def test_check_sequence_type_condition_not_satisfied(sequence, type_):
@@ -688,6 +669,12 @@ def test_check_scalar_or_sequence_arg_invalid(scalar_or_sequence):
         pytest.param((False, True), bool, id="sequence of bool"),
         pytest.param([1, 2, 3], int, id="sequence of int"),
         pytest.param([1.0, 2.0, 3.0], float, id="sequence of float"),
+        pytest.param(None, NoneType, id="None (NoneType)"),
+        pytest.param(None, (int, NoneType), id="None ((int, NoneType))"),
+        pytest.param(None, int | None, id="None (int | None)"),
+        pytest.param([None, None], NoneType, id="None (NoneType)"),
+        pytest.param([None, 1], (int, NoneType), id="None (int, NoneType)"),
+        pytest.param([None, 1], int | None, id="None (int | None)"),
     ),
 )
 def test_check_scalar_or_sequence_type_condition_satisfied(scalar_or_sequence, type_):
@@ -703,6 +690,12 @@ def test_check_scalar_or_sequence_type_condition_satisfied(scalar_or_sequence, t
         pytest.param((0, True), bool, id="sequence of bool"),
         pytest.param([1.0, 2, 3], int, id="sequence of int"),
         pytest.param([1, 2.0, 3.0], float, id="sequence of float"),
+        pytest.param(1.0, NoneType, id="float vs. NoneType"),
+        pytest.param(1.0, (int, NoneType), id="float vs. (int, NoneType)"),
+        pytest.param(1.0, int | None, id="float vs. int | None"),
+        pytest.param([1.0, 2.0], NoneType, id="float vs. NoneType"),
+        pytest.param([1.0, 2.0], (int, NoneType), id="float vs. (int, NoneType)"),
+        pytest.param([1.0, 2.0], int | None, id="float vs. int | None"),
     ),
 )
 def test_check_scalar_or_sequence_type_condition_not_satisfied(
