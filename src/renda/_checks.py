@@ -13,8 +13,8 @@
 # limitations under the License.
 import operator
 import re
-from types import UnionType
-from typing import Any, Sequence
+from types import NoneType, UnionType
+from typing import Any, Sequence, get_args
 
 from renda._exceptions import _CheckError
 from renda._messages import _BUG_MESSAGE
@@ -25,8 +25,7 @@ def _check_seed(seed: int | None) -> int | None:
 
     return _check_scalar(
         scalar=seed,
-        type_=int,
-        allow_none=True,
+        type_=int | None,
         name="seed",
         ge=MIN_SEED,
         le=MAX_SEED,
@@ -40,16 +39,14 @@ __TYPE_TYPE = type | UnionType | tuple[Any, ...]
 def _check_scalar(
     scalar: Any,
     type_: __TYPE_TYPE,
-    allow_none: bool = False,
     name: str = "scalar",
     **operators: Any,
 ) -> Any:
     type_ = __check_type_arg(type_)
-    allow_none = __check_allow_none_arg(allow_none)
     name = __check_name_arg(name)
     operators = __check_operators_arg(operators)
 
-    if allow_none and scalar is None:
+    if scalar is None and __type_includes_none(type_):
         return scalar
 
     check_error_message = ""
@@ -62,9 +59,8 @@ def _check_scalar(
         type_str = __get_type_str(type_)
         check_error_message = (
             f"{check_error_message}\n"
-            f"  - `{name}` must be of type {type_str}, "
-            f"{allow_none * 'or `None`, '}"
-            f"got `{scalar}` of type `{type(scalar).__qualname__}`"
+            f"  - `{name}` must be of type {type_str}, got `{scalar}` of "
+            f"type `{type(scalar).__qualname__}`"
         )
 
     # --------------------------
@@ -291,13 +287,6 @@ def __check_type_arg(type_: __TYPE_TYPE) -> __TYPE_TYPE:
     return type_
 
 
-def __check_allow_none_arg(allow_none: bool) -> bool:
-    if not isinstance(allow_none, bool):
-        raise TypeError(f"`allow_none` must be of type `bool`, got `{allow_none}`")
-
-    return allow_none
-
-
 def __check_name_arg(name: str) -> str:
     if not isinstance(name, str):
         raise TypeError(f"`name` must be a `str`, got `{name}`")
@@ -339,6 +328,14 @@ def __check_operators_arg(operators: dict[str, Any]) -> dict[str, Any]:
         )
 
     return operators
+
+
+def __type_includes_none(type_: __TYPE_TYPE) -> bool:
+    return (
+        type_ is NoneType
+        or (isinstance(type_, tuple) and NoneType in type_)
+        or (isinstance(type_, UnionType) and NoneType in get_args(type_))
+    )
 
 
 def __get_type_str(type_: __TYPE_TYPE) -> str:
