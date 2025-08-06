@@ -472,6 +472,9 @@ def test_check_sequence_sequence_arg_invalid(sequence):
         pytest.param((False, True), bool, id="bool"),
         pytest.param([1, 2, 3], int, id="int"),
         pytest.param([1.0, 2.0, 3.0], float, id="float"),
+        pytest.param([None, None], NoneType, id="None (NoneType)"),
+        pytest.param([None, 1], (int, NoneType), id="None (int, NoneType)"),
+        pytest.param([None, 1], int | None, id="None (int | None)"),
     ),
 )
 def test_check_sequence_type_condition_satisfied(sequence, type_):
@@ -481,9 +484,12 @@ def test_check_sequence_type_condition_satisfied(sequence, type_):
 @pytest.mark.parametrize(
     ("sequence", "type_"),
     (
-        pytest.param((0, True), bool, id="bool"),
-        pytest.param([1.0, 2, 3], int, id="int"),
-        pytest.param([1, 2.0, 3.0], float, id="float"),
+        pytest.param((0, True), bool, id="int vs. bool"),
+        pytest.param([1.0, 2, 3], int, id="float vs. int"),
+        pytest.param([1, 2.0, 3.0], float, id="int vs. float"),
+        pytest.param([1.0, 2.0], NoneType, id="float vs. NoneType"),
+        pytest.param([1.0, 2.0], (int, NoneType), id="float vs. (int, NoneType)"),
+        pytest.param([1.0, 2.0], int | None, id="float vs. int | None"),
     ),
 )
 def test_check_sequence_type_condition_not_satisfied(sequence, type_):
@@ -663,6 +669,12 @@ def test_check_scalar_or_sequence_arg_invalid(scalar_or_sequence):
         pytest.param((False, True), bool, id="sequence of bool"),
         pytest.param([1, 2, 3], int, id="sequence of int"),
         pytest.param([1.0, 2.0, 3.0], float, id="sequence of float"),
+        pytest.param(None, NoneType, id="None (NoneType)"),
+        pytest.param(None, (int, NoneType), id="None ((int, NoneType))"),
+        pytest.param(None, int | None, id="None (int | None)"),
+        pytest.param([None, None], NoneType, id="None (NoneType)"),
+        pytest.param([None, 1], (int, NoneType), id="None (int, NoneType)"),
+        pytest.param([None, 1], int | None, id="None (int | None)"),
     ),
 )
 def test_check_scalar_or_sequence_type_condition_satisfied(scalar_or_sequence, type_):
@@ -678,6 +690,12 @@ def test_check_scalar_or_sequence_type_condition_satisfied(scalar_or_sequence, t
         pytest.param((0, True), bool, id="sequence of bool"),
         pytest.param([1.0, 2, 3], int, id="sequence of int"),
         pytest.param([1, 2.0, 3.0], float, id="sequence of float"),
+        pytest.param(1.0, NoneType, id="float vs. NoneType"),
+        pytest.param(1.0, (int, NoneType), id="float vs. (int, NoneType)"),
+        pytest.param(1.0, int | None, id="float vs. int | None"),
+        pytest.param([1.0, 2.0], NoneType, id="float vs. NoneType"),
+        pytest.param([1.0, 2.0], (int, NoneType), id="float vs. (int, NoneType)"),
+        pytest.param([1.0, 2.0], int | None, id="float vs. int | None"),
     ),
 )
 def test_check_scalar_or_sequence_type_condition_not_satisfied(
