@@ -20,6 +20,7 @@ from torch.nn import functional as F
 from torch.nn import init
 
 from renda._checks import _check_scalar, _check_seed
+from renda._messages import _BUG_MESSAGE
 from renda.random import temp_seed
 
 
@@ -31,7 +32,6 @@ class _Linear(Module):
         # -------
         in_features: int,
         out_features: int,
-        transposed: bool,
         bias: bool,
         # -----
         # Init
@@ -52,11 +52,6 @@ class _Linear(Module):
             name="out_features",
             gt=0,
         )
-        self.transposed = _check_scalar(
-            scalar=transposed,
-            type_=bool,
-            name="transposed",
-        )
         bias = _check_scalar(
             scalar=bias,
             type_=bool,
@@ -64,10 +59,16 @@ class _Linear(Module):
         )
         self.seed = _check_seed(seed)
 
-        if transposed:
-            self.weight = Parameter(torch.empty(in_features, out_features))
-        else:
+        if type(self) is EncoderLinear:
             self.weight = Parameter(torch.empty(out_features, in_features))
+        elif type(self) is DecoderLinear:
+            self.weight = Parameter(torch.empty(in_features, out_features))
+        else:  # pragma: no cover
+            raise TypeError(
+                f"unsupported subclass `{type(self).__name__}` of `_Linear`, "
+                f"supported subclasses are `EncoderLinear` and `DecoderLinear`"
+                f"{_BUG_MESSAGE}"
+            )
 
         if bias:
             self.bias = Parameter(torch.empty(out_features))
@@ -105,7 +106,6 @@ class EncoderLinear(_Linear):
         super().__init__(
             in_features=in_features,
             out_features=out_features,
-            transposed=False,
             bias=bias,
             seed=seed,
         )
@@ -131,7 +131,6 @@ class DecoderLinear(_Linear):
         super().__init__(
             in_features=in_features,
             out_features=out_features,
-            transposed=True,
             bias=bias,
             seed=seed,
         )
