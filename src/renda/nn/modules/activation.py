@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
-from typing import Callable
+from typing import Any, Callable
 
 import torch
 from torch import Tensor
@@ -22,29 +22,68 @@ from renda._exceptions import _CheckError
 
 
 class Activation(Module):
+    activation: Module | Callable[..., Any]
+
     def __init__(
         self,
-        activation: str | Module,
+        activation: str | type[Module] | Module | Callable[..., Any],
     ) -> None:
         super().__init__()
 
+        # ----
+        # str
+        # ----
+        if isinstance(activation, str):
+            modules = (torch.nn, torch.nn.functional)
+            for module in modules:
+                activation_ = getattr(module, activation, None)
+                if activation_ is not None:
+                    break
+            else:
+                raise _CheckError(
+                    f"`activation` (when passed as a `str`) must be the name "
+                    f"of a class from `torch.nn` or a function from "
+                    f"`torch.nn.functional`, got `{activation}`"
+                )
+        else:
+            activation_ = activation
 
-def _foo(activation) -> Callable[[Tensor], Tensor]:
-    if isinstance(activation, str):
-        activation_ = getattr(torch.nn, activation, None)
-        if activation_ is not None:
-            return activation_()
+        # ----------------
+        # Module subclass
+        # ----------------
+        if inspect.isclass(activation_):
+            if issubclass(activation_, Module):
+                activation_ = activation_()
+            else:
+                raise _CheckError(
+                    f"`activation` (when passed as a `class`) must be a "
+                    f"`torch.nn.Module` subclass, got `{activation}`"
+                )
 
-        activation_ = getattr(torch.nn.functional, activation, None)
-        if activation_ is not None:
-            return activation_
+        # -------
+        # Module
+        # -------
+        if isinstance(activation_, Module):
+            self.activation = activation_
 
-    if inspect.isclass(activation):
-        activation_ = activation()
-    else:
-        activation_ = activation
+        # ---------
+        # function
+        # ---------
+        elif callable(activation_):
+            self.activation = lambda input_: activation_(input_)
 
-    if isinstance(activation_, Callable):
-        return activation_
+        # ------------------
+        # raise _CheckError
+        # ------------------
+        else:
+            raise _CheckError(
+                f"`activation` must be one of the following (got {activation}):\n"
+                f"  - the name (`str`) of a class/function from one of these modules:\n"
+                f"    `torch.nn`, `torch.nn.functional`\n"
+                f"  - a `torch.nn.Module` subclass\n"
+                f"  - an instance of a `torch.nn.Module` subclass\n"
+                f"  - a function"
+            )
 
-    raise _CheckError()
+    def forward(self, input_: Tensor) -> Tensor:
+        return self.activation(input_)
