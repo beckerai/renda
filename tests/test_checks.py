@@ -44,19 +44,9 @@ def test_check_seed_satisfied(seed):
     assert _check_seed(seed) == seed
 
 
-@pytest.mark.parametrize(
-    "value",
-    (
-        pytest.param(0.0, id="0.0"),
-        pytest.param(MIN_SEED - 1, id="MIN_SEED - 1"),
-        pytest.param(MAX_SEED + 1, id="MAX_SEED + 1"),
-        pytest.param("zero", id="zero"),
-        pytest.param(lambda: 0, id="lambda: 0"),
-    ),
-)
-def test_check_seed_not_satisfied(value):
+def test_check_seed_not_satisfied(non_seed):
     with pytest.raises(_CheckError):
-        _check_seed(value)
+        _check_seed(non_seed)
 
 
 # ==============================================================================

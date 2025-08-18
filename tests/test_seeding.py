@@ -18,7 +18,7 @@ import pytest
 import torch
 
 from renda._exceptions import _CheckError
-from renda.seeding import MAX_SEED, MIN_SEED, temp_seed
+from renda.seeding import temp_seed
 
 
 @pytest.mark.parametrize(
@@ -138,16 +138,6 @@ class TestTempSeed:
         assert all_equal(a, b)
 
 
-@pytest.mark.parametrize(
-    "seed",
-    (
-        pytest.param(0.0, id="0.0"),
-        pytest.param(MIN_SEED - 1, id="MIN_SEED - 1"),
-        pytest.param(MAX_SEED + 1, id="MAX_SEED + 1"),
-        pytest.param("zero", id="zero"),
-        pytest.param(lambda: 0, id="lambda: 0"),
-    ),
-)
-def test_temp_seed_seed_arg_invalid(seed):
+def test_temp_seed_seed_arg_invalid(non_seed):
     with pytest.raises(_CheckError):
-        temp_seed(seed)
+        temp_seed(non_seed)
