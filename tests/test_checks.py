@@ -19,11 +19,49 @@ import pytest
 from renda._checks import (
     _check_scalar,
     _check_scalar_or_sequence,
+    _check_seed,
     _check_sequence,
 )
 from renda._exceptions import _CheckError
+from renda.seeding import MAX_SEED, MIN_SEED
 
 
+# ==============================================================================
+# Test special checks
+# ==============================================================================
+@pytest.mark.parametrize(
+    "seed",
+    (
+        pytest.param(1, id="1"),
+        pytest.param(MIN_SEED, id="MIN_SEED"),
+        pytest.param(MAX_SEED, id="MAX_SEED"),
+        pytest.param(None, id="None"),
+        pytest.param(False, id="False"),
+        pytest.param(True, id="True"),
+    ),
+)
+def test_check_seed_satisfied(seed):
+    assert _check_seed(seed) == seed
+
+
+@pytest.mark.parametrize(
+    "value",
+    (
+        pytest.param(0.0, id="0.0"),
+        pytest.param(MIN_SEED - 1, id="MIN_SEED - 1"),
+        pytest.param(MAX_SEED + 1, id="MAX_SEED + 1"),
+        pytest.param("zero", id="zero"),
+        pytest.param(lambda: 0, id="lambda: 0"),
+    ),
+)
+def test_check_seed_not_satisfied(value):
+    with pytest.raises(_CheckError):
+        _check_seed(value)
+
+
+# ==============================================================================
+# Test general checks
+# ==============================================================================
 @pytest.mark.parametrize(
     ("scalar", "type_"),
     (

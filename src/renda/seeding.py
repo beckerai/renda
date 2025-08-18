@@ -17,21 +17,11 @@ from typing import Any, Final, Iterable
 import numpy as np
 import torch
 
-from renda._checks import _check_scalar
+from renda._checks import _check_seed
 
 
 MIN_SEED: Final[int] = 0
 MAX_SEED: Final[int] = 4294967295  # 2^32 - 1 (uint32)
-
-
-def _check_seed(seed: int | None) -> int | None:
-    return _check_scalar(
-        scalar=seed,
-        type_=int | None,
-        name="seed",
-        ge=MIN_SEED,
-        le=MAX_SEED,
-    )
 
 
 class temp_seed:
