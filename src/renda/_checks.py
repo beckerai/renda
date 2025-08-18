@@ -20,6 +20,26 @@ from renda._exceptions import _CheckError
 from renda._messages import _BUG_MESSAGE
 
 
+# ==============================================================================
+# Special checks
+# ==============================================================================
+def _check_seed(seed: int | None) -> int | None:
+    # Import locally to avoid a circular import
+    # We want all check functions to come from this module
+    from renda.seeding import MAX_SEED, MIN_SEED
+
+    return _check_scalar(
+        scalar=seed,
+        type_=int | None,
+        name="seed",
+        ge=MIN_SEED,
+        le=MAX_SEED,
+    )
+
+
+# ==============================================================================
+# General checks
+# ==============================================================================
 # The second argument of `isinstance()` must be of this type
 __TYPE_TYPE = type | UnionType | tuple[Any, ...]
 
